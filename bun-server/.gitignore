@@ -1,0 +1,11 @@
+# Local env overrides
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+.DS_Store

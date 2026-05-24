@@ -1,0 +1,30 @@
+{
+  "name": "freeflow",
+  "version": "1.0.0",
+  "description": "Freeflow - AI-powered interactive playground with Claude Code",
+  "type": "module",
+  "scripts": {
+    "dev:server": "cd bun-server && bun run dev",
+    "dev:client": "cd web-client && bun run dev",
+    "build": "cd web-client && bun run build",
+    "start:server": "cd bun-server && bun run start",
+    "start:client": "cd web-client && bun run preview",
+    "stop": "taskkill /F /IM bun.exe 2>nul || killall -9 bun 2>/dev/null || echo 'Stopped'",
+    "install:all": "bun install && cd bun-server && bun install && cd ../web-client && bun install"
+  },
+  "keywords": [
+    "ai",
+    "playground",
+    "claude",
+    "terminal",
+    "vite"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14"
+  }
+}

@@ -111,3 +111,7 @@ dist
 
 # TernJS port file
 .tern-port
+
+/.claude/settings.local.json
+/.vscode/launch.json
+/brainstorm

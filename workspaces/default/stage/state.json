@@ -1,0 +1,20 @@
+{
+  "timestamp": 1779653854654,
+  "version": 1779653854654,
+  "syncId": "sync-1779653854654-6akqzxh",
+  "state": {
+    "timestamp": 1779653853195,
+    "values": {
+      "formValues": {
+        "task1": true,
+        "task2": true,
+        "task3": false,
+        "task-visit-parent": false
+      },
+      "selections": [],
+      "activeTab": null,
+      "scrollPositions": {}
+    },
+    "metadata": {}
+  }
+}

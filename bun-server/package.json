@@ -1,0 +1,17 @@
+{
+  "name": "freeflow-server",
+  "version": "1.0.0",
+  "description": "Bun server for Freeflow - WebSocket hub, PTY manager, and file coordinator",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run server.ts",
+    "start": "bun run server.ts"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "bun-types": "latest"
+  }
+}

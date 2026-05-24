@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Checklist</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="checklist-container">
+    <h1>Today's Tasks</h1>
+
+    <div class="checklist" id="checklist">
+      <div class="check-item" data-id="1">
+        <input type="checkbox" id="task1" checked>
+        <div class="task-content">
+          <span class="task-text">See the Doctor</span>
+          <span class="task-time">11:00 AM</span>
+        </div>
+      </div>
+
+      <div class="check-item" data-id="2">
+        <input type="checkbox" id="task2" checked>
+        <div class="task-content">
+          <span class="task-text">Lunch with Mary</span>
+          <span class="task-time">2:00 PM</span>
+        </div>
+      </div>
+
+      <div class="check-item" data-id="3">
+        <input type="checkbox" id="task3">
+        <div class="task-content">
+          <span class="task-text">Collect Tickets</span>
+          <span class="task-time">5:00 PM</span>
+        </div>
+      </div>
+
+      <div class="check-item" data-id="visit-parent">
+        <input type="checkbox" id="task-visit-parent">
+        <div class="task-content">
+          <span class="task-text">Visit parent</span>
+          <span class="task-time">7:00 PM</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Freeflow Infrastructure - PROTECTED: Do NOT remove -->
+  <script src="freeflow-core.js"></script>
+  <script src="freeflow-collectors.js"></script>
+  <!-- App Logic - AI Editable: Clear/modify content, keep script tag -->
+  <script src="app.js"></script>
+</body>
+</html>
