@@ -1,16 +1,11 @@
 {
-  "timestamp": 1779718088329,
-  "version": 1779718088329,
-  "syncId": "sync-1779718088329-cs7v80n",
+  "timestamp": 1779727075173,
+  "version": 1779727075173,
+  "syncId": "sync-1779727075173-wj8luy3",
   "state": {
-    "timestamp": 1779718088444,
+    "timestamp": 1779727075452,
     "values": {
-      "formValues": {
-        "task1": true,
-        "task2": true,
-        "task3": false,
-        "task-visit-parent": false
-      },
+      "formValues": {},
       "selections": [],
       "activeTab": null,
       "scrollPositions": {}
