@@ -111,17 +111,21 @@
   flex: 1;
   overflow: hidden;
   position: relative;
+  z-index: 20;
 }
 
 .terminal-panel__xterm {
   width: 100%;
   height: 100%;
-  padding: 8px;
 }
 
 /* xterm.js custom styles */
 .terminal-panel__xterm .xterm {
   height: 100%;
+}
+
+.terminal-panel__xterm .xterm-screen {
+  padding: 8px;
 }
 
 .terminal-panel__xterm .xterm-viewport {

@@ -2,11 +2,23 @@
 
 **AI Brain** = Claude Code running in the terminal PTY.
 
-## CRITICAL: Use the Shadow-Staging Skill
+## Understanding the Conversation Context
+
+When operating in this workspace, you are inside the **Freeflow web interface**. The user is typing in the chat view (terminal panel) and seeing responses there.
+
+**Key insight:** The user's conversation is almost always about **their ideas/subject matter** — not about the playground HTML project itself. The playground (right panel) is a visualization canvas for exploring those ideas.
+
+- User says "workflow diagram" → They want to **discuss/whiteboard** a workflow concept
+- User says "show me a login form" → They want to **see** what a login form could look like
+- The playground content is the **medium**, not the **topic**
+
+Only implement in the playground when the user explicitly asks to "build", "create", "add", or "show" something visual.
+
+## CRITICAL: Use the playground-update Skill
 
 For ALL UI updates, invoke the skill first:
 ```
-/skill shadow-staging
+/skill playground-update
 ```
 
 This gives you the full playbook for Mode 1 (Live Commands) and Mode 2 (Shadow → Deploy).
@@ -55,7 +67,7 @@ Read shadow/index.html
 Edit shadow/index.html
 
 # 3. Deploy so changes persist on refresh
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 ```
 
 ### Mode 2: Shadow → Deploy (complex changes)
@@ -67,7 +79,7 @@ Use for: new forms, redesigns, multi-file changes
 Read stage/index.html
 Write shadow/index.html
 Write shadow/style.css
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 ```
 
 ---

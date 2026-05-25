@@ -81,7 +81,7 @@ export const PlaygroundPanel: React.FC = () => {
       // Request state from iframe via postMessage (CORS-safe)
       if (iframeRef.current?.contentWindow) {
         iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ type: 'request_state_sync' }),
+          { type: 'request_state_sync' },
           '*'
         );
       }

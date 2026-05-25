@@ -110,15 +110,21 @@ function initFreeflow() {
 
 // Handle sync button click
 function handleSyncRequest() {
-  console.log('[Freeflow] State sync requested');
+  console.log('[Freeflow] State sync requested, collectors:', Object.keys(window.freeflow.collectors));
   const state = window.freeflow.collectState();
+  console.log('[Freeflow] Collected state:', state);
   window.parent.postMessage({ type: 'state_sync_result', data: state }, '*');
+  console.log('[Freeflow] Sent state_sync_result to parent');
 }
 
 // Handle messages from parent window
 function handleParentMessage(event) {
+  console.log('[Freeflow] Received message from parent:', typeof event.data, event.data?.type);
   const data = event.data;
-  if (!data || typeof data !== 'object') return;
+  if (!data || typeof data !== 'object') {
+    console.log('[Freeflow] Ignoring message - not an object');
+    return;
+  }
 
   switch (data.type) {
     case 'dom_command':

@@ -1,9 +1,9 @@
 {
-  "timestamp": 1779653854654,
-  "version": 1779653854654,
-  "syncId": "sync-1779653854654-6akqzxh",
+  "timestamp": 1779718088329,
+  "version": 1779718088329,
+  "syncId": "sync-1779718088329-cs7v80n",
   "state": {
-    "timestamp": 1779653853195,
+    "timestamp": 1779718088444,
     "values": {
       "formValues": {
         "task1": true,
@@ -15,6 +15,9 @@
       "activeTab": null,
       "scrollPositions": {}
     },
-    "metadata": {}
+    "metadata": {
+      "version": "1.0.0",
+      "collectorCount": 4
+    }
   }
 }

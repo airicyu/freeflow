@@ -1,11 +1,11 @@
 ---
-name: shadow-staging
-description: Use shadow/stage folders with live commands and atomic deployment for UI updates
+name: playground-update
+description: Update the playground UI with live commands and atomic deployment
 version: 3.0.0
 tools: [file_read, file_write, bash]
 ---
 
-# Shadow-Staging UI Workflow
+# Playground Update Workflow
 
 ## Quick Decision: Which Mode?
 
@@ -63,7 +63,7 @@ Read stage/state.json
 Edit shadow/index.html (apply changes + bake state into HTML attributes)
 
 # 4. Deploy so changes persist across refreshes
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 ```
 
 **Key:** Live command updates UI **immediately**. Shadow edit + deploy makes changes permanent. **CRITICAL:** Bake user state directly into HTML attributes (`checked`, `value`) so the initial render shows the correct state without relying on localStorage.
@@ -88,7 +88,7 @@ Write shadow/style.css
 Write shadow/app.js      # App logic + state collectors
 
 # 3. Deploy to stage (atomic update)
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 
 # 4. Vite HMR refreshes once with final result
 ```
@@ -99,7 +99,7 @@ bash .claude/skills/shadow-staging/deploy.sh
 
 ```bash
 # Deploy shadow to stage - handles directory automatically
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 ```
 
 This runs: `rsync -av --delete shadow/ stage/`
@@ -138,7 +138,7 @@ curl -X POST /command -d '{"action":"uncheck","selector":"#task1"}'
 Read shadow/index.html
 Read stage/state.json  # task2=true, task3=false
 Edit shadow/index.html (remove 'checked' from task1, add 'checked' to task2)
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 ```
 
 ### Scenario 2: Add New Task (Mode 1)
@@ -148,7 +148,7 @@ curl -X POST /command \
   -d '{"action":"appendHtml","selector":"#checklist","value":"<div class=\"check-item\" data-id=\"4\"><input type=\"checkbox\" id=\"task4\"><div class=\"task-content\"><span class=\"task-text\">Visit Parent</span><span class=\"task-time\">7:00 PM</span></div></div>"}'
 Read shadow/index.html
 Edit shadow/index.html (add the same task HTML)
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 ```
 
 ### Scenario 3: Batch Multiple Changes (Mode 1)
@@ -166,7 +166,7 @@ curl -X POST /command \
 Read shadow/index.html
 Read stage/state.json
 Edit shadow/index.html (remove task 3, apply current checkbox states from state.json)
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 ```
 
 ### Scenario 4: Create New Form (Mode 2)
@@ -176,7 +176,7 @@ bash .claude/skills/shadow-staging/deploy.sh
 Write shadow/index.html (login form HTML - keep script imports!)
 Write shadow/style.css (form styles)
 Write shadow/app.js (form validation + collectors)
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 ```
 
 ### Scenario 5: Clear Playground (Mode 2)
@@ -186,7 +186,7 @@ bash .claude/skills/shadow-staging/deploy.sh
 Read shadow/index.html
 Edit shadow/index.html (clear body content, KEEP script imports)
 Write shadow/app.js (clear content or minimal init)
-bash .claude/skills/shadow-staging/deploy.sh
+bash .claude/skills/playground-update/deploy.sh
 ```
 
 **IMPORTANT:** When clearing:
