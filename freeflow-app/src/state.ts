@@ -5,6 +5,7 @@ import { join } from "path";
 import { writeFileSync, existsSync, readFileSync } from "fs";
 import { CONFIG } from "./config";
 import { logger } from "./logger";
+import { getWorkspacePaths } from "./config";
 import type { MessageType } from "./types";
 
 let syncInProgress = false;
@@ -14,8 +15,9 @@ export function initState(broadcast: (msg: MessageType) => void) {
   broadcastFn = broadcast;
 }
 
-export function writeStateFile(stateData: unknown): void {
-  const statePath = join(CONFIG.WORKSPACE_DIR, "state.json");
+export function writeStateFile(stateData: unknown, workspaceId: string = CONFIG.DEFAULT_WORKSPACE): void {
+  const paths = getWorkspacePaths(workspaceId, "named");
+  const statePath = join(paths.stagePath, "state.json");
   const stateContent = JSON.stringify({
     timestamp: Date.now(),
     version: Date.now(),
@@ -31,8 +33,9 @@ export function writeStateFile(stateData: unknown): void {
   }
 }
 
-export function readStateFile(): unknown {
-  const statePath = join(CONFIG.WORKSPACE_DIR, "state.json");
+export function readStateFile(workspaceId: string = CONFIG.DEFAULT_WORKSPACE): unknown {
+  const paths = getWorkspacePaths(workspaceId, "named");
+  const statePath = join(paths.stagePath, "state.json");
   if (!existsSync(statePath)) {
     return {};
   }
@@ -43,7 +46,7 @@ export function readStateFile(): unknown {
   }
 }
 
-export function requestStateSync(syncId?: string): void {
+export function requestStateSync(syncId?: string, updateId?: string): void {
   if (syncInProgress) {
     logger.debug("[State] Sync already in progress, skipping");
     return;
@@ -54,7 +57,7 @@ export function requestStateSync(syncId?: string): void {
 
   broadcastFn?.({
     type: "request_state_sync",
-    data: { syncId },
+    data: { syncId, updateId },
   });
 
   setTimeout(() => {

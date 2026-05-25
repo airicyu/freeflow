@@ -1,0 +1,121 @@
+brainstorm about how to support multiple workspaces
+
+how to maintain multiple workspace?
+
+problem 1:
+If there is workspace A and B. And now is actively using workspace A.
+How do we switch to B?
+
+problem 2:
+If there is workspace A. How do we create new workspace B?
+
+
+
+I am thinking a simplier way, see whether it works:
+
+## Option A
+
+the playground frontend is just a single web server.
+
+"http://localhost:3002/workspaces/A/*" route to "/workspaces/A/stage/*"
+
+so the frontend can serve for:
+- http://localhost:3002/workspaces/A/index.html
+- http://localhost:3002/workspaces/A/main.js
+- http://localhost:3002/workspaces/A/style.css
+- http://localhost:3002/workspaces/A/freeflow-core.js
+- http://localhost:3002/workspaces/A/freeflow-collectors.js
+(So as for workspace B)
+
+rightnow the deployment is rely on AI skill to trigger deploy, and then rely on hot reload to apply to UI.
+but actually we can get rid of hot reload.
+deployment logic:
+the AI first fire a request sync state command to quickly sync state again.
+then AI can subsequently fire a websocket message of "refresh" to server and forward to web client side. And then the playground side apply the refresh.
+(if client side handle message one after one, so it will sync state first, and then do refresh?)
+
+but my concern is if user is typing something in playground UI stuff...the refresh may make it feel the refresh and feel interupted.
+
+## Option B
+
+the playground frontend is just a single vite server.
+The single vite server serve for multiple workspaces' "stage/index.html" entry point and route by paths.
+
+so 
+- http://localhost:3002/workspaces/A/index.html is workspace A entry point
+- http://localhost:3002/workspaces/A/main.js is server by same entry point
+
+
+
+
+What happens to user input during the reload?
+
+If follow our current design, then AI may drawing the UI and take some minutes.
+It may considered some state at some time when AI read. ya, it may be stale.
+Even through, just before the deploy, client side can send new state to sync file state,
+but AI is already finished the updating logic, it didnt see any latest changes, so it will not know to cater the recent new states.
+(i.e. AI is not just ignored the new state synced, it also ignore many recently synced states)
+
+
+I am thinking about to do like this. the flow be:
+
+# step 1
+user is asking for UI changes
+
+# step 2
+AI brain received, and call bun-server to fire "updating" message via websocket to playground client side.
+
+# step 3
+playground client side received the "updating" message, will show a small dialog message of "AI is cooking the UI changes...[spinning loading icon]" on top middle of screen.
+this small dialog message should be non-blocking to UI (So it will not create an overlay that blocking user actions)
+
+# step 4
+actually meanwhile of step 3, AI may ask for changes (in chat view) or just do the change processing.
+AI may send live commands as it is now. Playground side may apply the live commands. (While the updating message still on screen)
+playground is also keep the normal collecting state as well.
+user can interact normally.
+
+# step 5
+AI will eventually updating shadow sources.
+After updated shadow sources done, AI will go to pre-deploy step.
+
+# step 6
+AI will call bun-server to fire "pre-deploy" message via websocket to playground client side.
+AI need check file synced state again, then think to applying the state to the new UI if applicable (If the scenario is creating a totally different UI, so original state didnt matter anymore, then no need to do this).
+This step is to make sure that latest state is also reflecting in UI.
+AI will then call bun-server to send a "reload" message via websocket to playground client side.
+
+# step 7
+playground side received the "pre-deploy" message, it will dismiss the "updating" message dialog.
+but then playground will wear a very thin overlay (so blocking user further interaction),
+and on top middle of screen showing a message of "AI is deploying the UI changes...[spin loading icon]"
+
+# step 8
+Basically AI no need to wait other stuff, it just continue to finished its state updating UI job.
+
+# step 9
+After AI finished the final state updating of shadow UI.
+AI trigger the deploy.sh script to swap the UI.
+then AI call bun-server to fire "reload" message via websocket to playground client side.
+
+# step 10
+playground side received the "reload" message, reload the playground to showing the new UI.
+
+
+
+
+
+ 1. Failed deploy: What UI if shadow→stage copy fails?
+it is a rsync script that should work?
+if failed, let AI to check the problem to handle?
+
+ 2. State applicability: How does AI decide if old state applies to new UI?
+check the latest synced state.
+And see whether the current UI's default loading display is aligned with the synced state value.
+If not, then need to minor update the UI so that should reflect as on load UI is reflecting the state value.
+
+ 3. Timeout: What if AI takes too long between pre-deploy and reload?
+ for the sync state reflection changes, it normally takes 1-3 minutes.
+ It is difficult to judge.
+ but actually AI brain will probably say sth on the terminal, and user may notice.
+ if user feel sth wrong, user can in the chat view side talk to AI to handle

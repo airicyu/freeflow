@@ -162,30 +162,30 @@ bun run install:all
 
 ### Running
 
-**Terminal 1 - Bun Server:**
+**Terminal 1 - App Server:**
 ```bash
 bun run dev:server
 ```
 
-**Terminal 2 - Web Client:**
+**Terminal 2 - Web UI:**
 ```bash
 bun run dev:client
 ```
 
 **Access:**
-- Web Client: http://localhost:3002
+- Web UI: http://localhost:3002
 - WebSocket: ws://localhost:3000
-- Playground: http://localhost:3001
+- Playground: http://localhost:3000/workspaces/default/
 
 ## Project Structure
 
 ```
 freeflow/
-├── bun-server/              # Bun server (WebSocket + PTY + HTTP)
-│   ├── server.ts
+├── freeflow-app/            # Bun server (WebSocket + PTY + HTTP)
+│   ├── src/server.ts
 │   └── package.json
 │
-├── web-client/              # React web client
+├── freeflow-web/            # React web client
 │   ├── src/
 │   │   ├── App.tsx
 │   │   ├── components/
@@ -198,7 +198,7 @@ freeflow/
 │
 ├── workspaces/
 │   └── default/             # AI's workspace
-│       ├── stage/           # ← Live UI (Vite serves)
+│       ├── stage/           # ← Live UI (server serves)
 │       │   ├── index.html
 │       │   ├── style.css
 │       │   ├── main.js      # Live command executor

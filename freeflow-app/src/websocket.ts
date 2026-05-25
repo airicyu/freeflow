@@ -6,6 +6,13 @@ import { logger } from "./logger";
 import type { WebSocketData, ClientWebSocket, MessageType } from "./types";
 import { initPty, spawnClaudePTY, getPty, killPty, resizePty, writeToPty } from "./pty";
 import { writeStateFile, completeSync } from "./state";
+import { CONFIG } from "./config";
+
+// Track active update IDs for UI phases
+const activeUpdates = new Map<string, {
+  phase: "cooking" | "pre_deploy" | "reload";
+  startedAt: number;
+}>();
 
 const clients = new Map<string, ClientWebSocket>();
 
@@ -94,9 +101,40 @@ export function handleMessage(ws: ClientWebSocket, rawMessage: string): void {
 
       case "state_sync_result":
         completeSync();
-        if (message.data?.state) {
-          writeStateFile(message.data.state);
+        if (message.type === "state_sync_result") {
+          const { updateId, isFinal } = message.data;
+          if (updateId) {
+            logger.info(`[WS] Received state_sync_result for update ${updateId}, final: ${isFinal}`);
+            if (isFinal) {
+              activeUpdates.delete(updateId);
+            }
+          }
+          if (message.data?.state) {
+            writeStateFile(message.data.state, ws.data.workspaceId || CONFIG.DEFAULT_WORKSPACE);
+          }
         }
+        break;
+
+      case "ui_cooking":
+        // Track cooking phase
+        activeUpdates.set(message.updateId, { phase: "cooking", startedAt: Date.now() });
+        broadcastToClients(message);
+        break;
+
+      case "ui_pre_deploy":
+        // Track pre-deploy phase
+        if (message.updateId) {
+          activeUpdates.set(message.updateId, { phase: "pre_deploy", startedAt: Date.now() });
+        }
+        broadcastToClients(message);
+        break;
+
+      case "ui_reload":
+        // Track reload phase
+        if (message.updateId) {
+          activeUpdates.set(message.updateId, { phase: "reload", startedAt: Date.now() });
+        }
+        broadcastToClients(message);
         break;
 
       case "dom_command":
@@ -111,6 +149,29 @@ export function handleMessage(ws: ClientWebSocket, rawMessage: string): void {
     }
   } catch (err) {
     logger.error("[WS] Failed to parse message:", err);
+  }
+}
+
+/**
+ * Get active update info
+ */
+export function getActiveUpdate(updateId: string): { phase: "cooking" | "pre_deploy" | "reload"; startedAt: number } | undefined {
+  return activeUpdates.get(updateId);
+}
+
+/**
+ * Broadcast to workspace clients only
+ */
+export function broadcastToWorkspace(workspaceId: string, message: MessageType): void {
+  const data = JSON.stringify(message);
+  for (const [_, ws] of clients) {
+    if (ws.readyState === WebSocket.OPEN && ws.data.workspaceId === workspaceId) {
+      try {
+        ws.send(data);
+      } catch (err) {
+        logger.warn("[WS] Failed to send to workspace client:", err);
+      }
+    }
   }
 }
 

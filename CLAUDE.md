@@ -107,10 +107,10 @@ As Claude Code, you naturally respond to user requests like:
 
 ```
 freeflow/
-├── bun-server/server.ts   # WebSocket + PTY + Vite spawn
-├── web-client/            # React + xterm.js
-├── workspaces/default/    # ← You edit files here
-└── CLAUDE.md             # This file
+├── freeflow-app/src/server.ts   # WebSocket + PTY + HTTP server
+├── freeflow-web/                # React + xterm.js
+├── workspaces/default/          # ← You edit files here
+└── CLAUDE.md                   # This file
 ```
 
 ## Development Tips

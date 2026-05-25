@@ -7,6 +7,17 @@
  * Add UI-specific collectors in app.js using window.freeflow.registerCollector()
  */
 
+// Helper to check if element is infrastructure (should be excluded from state)
+function isInfrastructureElement(el) {
+  if (!el) return true;
+  // Exclude elements with ff-internal- prefix in ID
+  if (el.id && el.id.startsWith('ff-internal-')) return true;
+  // Exclude elements inside infrastructure containers
+  if (el.closest && el.closest('[data-ff-internal-internal]')) return true;
+  if (el.closest && el.closest('[id^="ff-internal-"]')) return true;
+  return false;
+}
+
 (function initDefaultCollectors() {
   // Wait for freeflow core to be ready
   if (!window.freeflow) {
@@ -18,6 +29,9 @@
   window.freeflow.registerCollector('formValues', () => {
     const values = {};
     document.querySelectorAll('input, textarea, select').forEach((el) => {
+      // Skip infrastructure elements
+      if (isInfrastructureElement(el)) return;
+
       const key = el.id || el.name;
       if (!key) return;
 
@@ -35,31 +49,33 @@
   // Selection state collector - captures selected elements
   window.freeflow.registerCollector('selections', () => {
     const selected = document.querySelectorAll('[data-selected], .selected, [aria-selected="true"]');
-    return Array.from(selected).map((el) => ({
-      id: el.id,
-      tag: el.tagName,
-      text: el.textContent?.slice(0, 100),
-    }));
+    return Array.from(selected)
+      .filter((el) => !isInfrastructureElement(el))
+      .map((el) => ({
+        id: el.id,
+        tag: el.tagName,
+        text: el.textContent?.slice(0, 100),
+      }));
   });
 
   // Active tab collector - captures currently active tab
   window.freeflow.registerCollector('activeTab', () => {
     const active = document.querySelector('[data-active], [data-tab].active, [aria-selected="true"]');
-    return active
-      ? {
-          id: active.id,
-          tab: active.getAttribute('data-tab'),
-          text: active.textContent?.slice(0, 50),
-        }
-      : null;
+    if (!active || isInfrastructureElement(active)) return null;
+    return {
+      id: active.id,
+      tab: active.getAttribute('data-tab'),
+      text: active.textContent?.slice(0, 50),
+    };
   });
 
   // Scroll positions collector - captures scrollable elements
   window.freeflow.registerCollector('scrollPositions', () => {
     const positions = {};
     document.querySelectorAll('[data-scrollable], [data-track-scroll]').forEach((el) => {
+      if (isInfrastructureElement(el)) return;
       const key = el.id || el.getAttribute('data-scrollable');
-      if (key) {
+      if (key && !key.startsWith('ff-internal-')) {
         positions[key] = el.scrollTop;
       }
     });

@@ -7,7 +7,6 @@ import { serve } from "bun";
 import type { Server } from "bun";
 import { CONFIG } from "./config";
 import { logger } from "./logger";
-import { spawnVite, stopVite } from "./vite";
 import { spawnClaudePTY, killPty, getPty } from "./pty";
 import type { WebSocketData } from "./types";
 import {
@@ -19,13 +18,13 @@ import {
 } from "./websocket";
 import { handleRouteAsync } from "./routes";
 import { initPty } from "./pty";
-import { initVite } from "./vite";
 import { initState } from "./state";
+import { initWorkspaces } from "./workspace";
 
 // Initialize modules
 initPty(broadcast);
-initVite(broadcast);
 initState(broadcast);
+initWorkspaces();
 initWebSocket(() => {
   if (!getPty()) {
     const newPty = spawnClaudePTY();
@@ -71,7 +70,6 @@ const server: Server<WebSocketData> = serve({
 // Graceful shutdown
 function shutdown(signal: string) {
   logger.info(`\n[Server] Shutting down (${signal})...`);
-  stopVite();
   killPty();
   process.exit(0);
 }
@@ -85,11 +83,9 @@ logger.info(`
 ║                    Freeflow Server                           ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ WebSocket: ws://localhost:${CONFIG.WS_PORT}/ws                       ║
-║ Playground: http://localhost:${CONFIG.VITE_PORT}                       ║
-║ Workspace: ${CONFIG.WORKSPACE_DIR.padEnd(47)}║
+║ Workspaces: http://localhost:${CONFIG.WS_PORT}/workspaces/{id}       ║
+║ Default: http://localhost:${CONFIG.WS_PORT}/workspaces/default/      ║
 ╚══════════════════════════════════════════════════════════════╝
 `);
-
-spawnVite();
 
 export { CONFIG };

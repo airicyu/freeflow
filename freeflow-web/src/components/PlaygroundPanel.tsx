@@ -15,37 +15,40 @@ type DomCommandMessage = {
 };
 
 /**
- * PlaygroundPanel - Interactive playground (iframe with Vite dev server)
+ * PlaygroundPanel - Interactive playground (iframe with workspace)
  *
  * Features:
- * - iframe pointing to Vite dev server (port 3001)
+ * - iframe pointing to Bun server workspace (port 3000)
  * - State sync button (triggers state collection)
- * - State collector executor (runs AI-generated state-collector.js)
+ * - UI phase handling (ui_cooking, ui_pre_deploy, ui_reload)
  * - Loading indicator
  * - Error handling
  */
 export const PlaygroundPanel: React.FC = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [status, setStatus] = useState<PlaygroundStatus>('loading');
-  const iframeUrl = 'http://localhost:3001';
+  const iframeUrl = 'http://localhost:3000/workspaces/default/index.html';
   const { send, registerHandler } = useWebSocket('ws://localhost:3000/ws');
   const [syncInProgress, setSyncInProgress] = useState(false);
   const syncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
 
-  // Check if Vite is ready
+  // Check if server is ready
   useEffect(() => {
-    const checkVite = async () => {
+    const checkServer = async () => {
       try {
-        await fetch('http://localhost:3001/health', {
-          mode: 'no-cors',
-        });
-        setStatus('ready');
+        const response = await fetch('http://localhost:3000/health');
+        if (response.ok) {
+          setStatus('ready');
+        } else {
+          setTimeout(checkServer, 1000);
+        }
       } catch {
-        setTimeout(checkVite, 1000);
+        setTimeout(checkServer, 1000);
       }
     };
 
-    const timeout = setTimeout(checkVite, 2000);
+    const timeout = setTimeout(checkServer, 1000);
     return () => clearTimeout(timeout);
   }, []);
 
@@ -102,14 +105,21 @@ export const PlaygroundPanel: React.FC = () => {
   }, [status, syncInProgress, handleSync]);
 
 
+// UI Phase Messages
+type UiPhaseMessage =
+  | { type: 'ui_cooking'; updateId: string; message: string }
+  | { type: 'ui_pre_deploy'; updateId: string }
+  | { type: 'ui_reload'; updateId: string };
+
   // Listen for WebSocket messages (from server), forward commands to iframe
   useEffect(() => {
-    console.log('[Playground] Registering dom_command handler');
+    console.log('[Playground] Registering handlers');
     const unregister = registerHandler((message) => {
       const msg = message as { type?: string };
       if (msg.type !== 'pty_output') {
         console.log('[Playground] Handler received:', msg.type);
       }
+
       // Handle dom_command from server
       if (msg.type === 'dom_command') {
         const cmd = message as DomCommandMessage;
@@ -133,6 +143,33 @@ export const PlaygroundPanel: React.FC = () => {
       // Handle state sync request from server
       if (msg.type === 'request_state_sync') {
         handleSync();
+      }
+
+      // Handle UI phase messages
+      const phaseMsg = message as UiPhaseMessage;
+      if (['ui_cooking', 'ui_pre_deploy', 'ui_reload'].includes(msg.type || '')) {
+        console.log('[Playground] UI phase message:', msg.type);
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(phaseMsg, '*');
+        }
+
+        // Update local status display
+        switch (msg.type) {
+          case 'ui_cooking':
+            setUpdateStatus(phaseMsg.type === 'ui_cooking' ? (phaseMsg as { message: string }).message : 'Cooking...');
+            break;
+          case 'ui_pre_deploy':
+            setUpdateStatus('Deploying...');
+            break;
+          case 'ui_reload':
+            setUpdateStatus('Reloading...');
+            break;
+        }
+
+        // Clear status after reload
+        if (msg.type === 'ui_reload') {
+          setTimeout(() => setUpdateStatus(null), 2000);
+        }
       }
     });
 
@@ -180,7 +217,8 @@ export const PlaygroundPanel: React.FC = () => {
         <div className="playground-panel__title">
           <span>Playground</span>
           {status === 'loading' && <span>(Loading...)</span>}
-          {status === 'ready' && <span style={{ color: '#28a745' }}>(Ready)</span>}
+          {status === 'ready' && !updateStatus && <span style={{ color: '#28a745' }}>(Ready)</span>}
+          {updateStatus && <span style={{ color: '#0066cc' }}>({updateStatus})</span>}
           {status === 'error' && <span style={{ color: '#dc3545' }}>(Error)</span>}
         </div>
         <div className="playground-panel__actions">

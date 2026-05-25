@@ -2,7 +2,7 @@
  * PTY module - Claude Code process management with restart handling
  */
 import type { Subprocess } from "bun";
-import { CONFIG } from "./config";
+import { CONFIG, getWorkspacePaths } from "./config";
 import { logger } from "./logger";
 import type { MessageType } from "./types";
 
@@ -63,8 +63,9 @@ export function killPty(): void {
   }
 }
 
-export function spawnClaudePTY(): Subprocess | null {
-  logger.info(`[PTY] Spawning Claude Code in ${CONFIG.WORKSPACE_DIR}`);
+export function spawnClaudePTY(workspaceId: string = CONFIG.DEFAULT_WORKSPACE): Subprocess | null {
+  const paths = getWorkspacePaths(workspaceId, "named");
+  logger.info(`[PTY] Spawning Claude Code in ${paths.shadowPath}`);
 
   const claudeCommand = process.env.CLAUDE_WRAPPER || CONFIG.CLAUDE_CMD;
   logger.info(`[PTY] Will run: ${claudeCommand}`);
@@ -85,7 +86,7 @@ export function spawnClaudePTY(): Subprocess | null {
           }
         },
       },
-      cwd: CONFIG.WORKSPACE_ROOT,
+      cwd: paths.shadowPath,
       env: process.env,
     });
 

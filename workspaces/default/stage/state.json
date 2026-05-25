@@ -1,9 +1,9 @@
 {
-  "timestamp": 1779727075173,
-  "version": 1779727075173,
-  "syncId": "sync-1779727075173-wj8luy3",
+  "timestamp": 1779741093446,
+  "version": 1779741093446,
+  "syncId": "sync-1779741093446-km2luz8",
   "state": {
-    "timestamp": 1779727075452,
+    "timestamp": 1779741092985,
     "values": {
       "formValues": {},
       "selections": [],
@@ -11,7 +11,7 @@
       "scrollPositions": {}
     },
     "metadata": {
-      "version": "1.0.0",
+      "version": "2.0.0",
       "collectorCount": 4
     }
   }
