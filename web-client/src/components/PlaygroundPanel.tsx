@@ -3,38 +3,15 @@ import { useWebSocket } from '../hooks/useWebSocket';
 
 type PlaygroundStatus = 'loading' | 'ready' | 'error';
 
-// DOM command type (matches server)
-type DomCommandAction =
-  | "check"
-  | "uncheck"
-  | "setText"
-  | "setHtml"
-  | "prependHtml"
-  | "appendHtml"
-  | "insertBefore"
-  | "insertAfter"
-  | "setValue"
-  | "setProperty"
-  | "setAttribute"
-  | "setStyle"
-  | "addClass"
-  | "removeClass"
-  | "toggleClass"
-  | "click"
-  | "focus"
-  | "scrollIntoView"
-  | "remove";
-
-type DomCommand = {
-  type: "dom_command";
-  id: string;
-  version: number;
-  timestamp: number;
-  action: DomCommandAction;
-  selector: string;
+// DOM command from server
+type DomCommandMessage = {
+  type: 'dom_command';
+  action?: string;
+  selector?: string;
   value?: string | boolean;
   property?: string;
   attribute?: string;
+  id?: string;
 };
 
 /**
@@ -50,36 +27,27 @@ type DomCommand = {
 export const PlaygroundPanel: React.FC = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [status, setStatus] = useState<PlaygroundStatus>('loading');
-  const [iframeUrl, setIframeUrl] = useState('http://localhost:3001');
-  const { send, ws, registerHandler } = useWebSocket('ws://localhost:3000/ws');
+  const iframeUrl = 'http://localhost:3001';
+  const { send, registerHandler } = useWebSocket('ws://localhost:3000/ws');
   const [syncInProgress, setSyncInProgress] = useState(false);
-  const syncDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const syncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check if Vite is ready
   useEffect(() => {
     const checkVite = async () => {
       try {
-        const response = await fetch('http://localhost:3001/health', {
+        await fetch('http://localhost:3001/health', {
           mode: 'no-cors',
         });
-        // If no-cors, we won't get an error on successful connection
         setStatus('ready');
       } catch {
-        // Vite not ready yet, try again
         setTimeout(checkVite, 1000);
       }
     };
 
-    // Wait a moment before checking
     const timeout = setTimeout(checkVite, 2000);
     return () => clearTimeout(timeout);
   }, []);
-
-  // Listen for Vite ready message from Bun server
-  useEffect(() => {
-    const originalWs = send; // Access the WebSocket from useWebSocket hook
-    // This is handled in the TerminalPanel which shares the same WebSocket
-  }, [send]);
 
   // Handle iframe load
   const handleIframeLoad = useCallback(() => {
@@ -133,74 +101,29 @@ export const PlaygroundPanel: React.FC = () => {
     return () => clearInterval(interval);
   }, [status, syncInProgress, handleSync]);
 
-  // Fallback state collector
-  const collectFallbackState = useCallback((iframe: HTMLIFrameElement): Record<string, unknown> => {
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!iframeDoc) return {};
-
-    const state: Record<string, unknown> = {};
-
-    // Collect form inputs
-    const inputs = iframeDoc.querySelectorAll('input, textarea, select');
-    inputs.forEach((el) => {
-      const element = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-      const id = element.id || element.name;
-      if (id) {
-        if (element instanceof HTMLInputElement && element.type === 'checkbox') {
-          state[id] = element.checked;
-        } else if (element instanceof HTMLInputElement && element.type === 'radio') {
-          if (element.checked) {
-            state[element.name || id] = element.value;
-          }
-        } else {
-          state[id] = element.value;
-        }
-      }
-    });
-
-    // Collect selected elements
-    const selected = iframeDoc.querySelectorAll('[data-selected], .selected, [aria-selected="true"]');
-    const selections: string[] = [];
-    selected.forEach((el) => {
-      const id = el.id || el.getAttribute('data-id');
-      if (id) selections.push(id);
-    });
-    if (selections.length > 0) {
-      state.selectedElements = selections;
-    }
-
-    // Collect active tab
-    const activeTab = iframeDoc.querySelector('[data-active], .active, [aria-selected="true"]');
-    if (activeTab) {
-      const tabId = activeTab.id || activeTab.getAttribute('data-tab');
-      if (tabId) state.activeTab = tabId;
-    }
-
-    return state;
-  }, []);
 
   // Listen for WebSocket messages (from server), forward commands to iframe
   useEffect(() => {
     console.log('[Playground] Registering dom_command handler');
     const unregister = registerHandler((message) => {
-      const msgType = (message as {type?: string}).type;
-      if (msgType !== 'pty_output') {
-        console.log('[Playground] Handler received:', msgType);
+      const msg = message as { type?: string };
+      if (msg.type !== 'pty_output') {
+        console.log('[Playground] Handler received:', msg.type);
       }
       // Handle dom_command from server
-      if (message.type === 'dom_command') {
-        console.log('[Playground] Received dom_command:', message.action, message.selector);
-        // Forward to iframe via postMessage (pass all command fields)
+      if (msg.type === 'dom_command') {
+        const cmd = message as DomCommandMessage;
+        console.log('[Playground] Received dom_command:', cmd.action, cmd.selector);
         if (iframeRef.current?.contentWindow) {
           console.log('[Playground] Forwarding to iframe');
           iframeRef.current.contentWindow.postMessage({
             type: 'dom_command',
-            action: message.action,
-            selector: message.selector,
-            value: message.value,
-            id: message.id,
-            property: message.property,
-            attribute: message.attribute,
+            action: cmd.action,
+            selector: cmd.selector,
+            value: cmd.value,
+            id: cmd.id,
+            property: cmd.property,
+            attribute: cmd.attribute,
           }, '*');
         } else {
           console.warn('[Playground] No iframe ref, cannot forward command');
@@ -208,7 +131,7 @@ export const PlaygroundPanel: React.FC = () => {
       }
 
       // Handle state sync request from server
-      if (message.type === 'request_state_sync') {
+      if (msg.type === 'request_state_sync') {
         handleSync();
       }
     });

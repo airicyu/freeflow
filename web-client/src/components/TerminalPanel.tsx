@@ -9,42 +9,68 @@ import { useWebSocket } from '../hooks/useWebSocket';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
 
-/**
- * TerminalPanel - xterm.js terminal running Claude Code
- *
- * Features:
- * - Full xterm.js terminal with ANSI support
- * - Bidirectional WebSocket communication with Bun server
- * - PTY output display (Claude Code TUI)
- * - PTY input forwarding (keyboard input)
- * - Auto-resize with fit addon
- * - Web link detection
- * - Search functionality
- */
 export const TerminalPanel: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const { ws, status, send } = useWebSocket('ws://localhost:3000/ws');
+  const { ws, send } = useWebSocket('ws://localhost:3000/ws');
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
+  const [isReady, setIsReady] = useState(false);
 
-  // Handle PTY output from server
   const handlePtyOutput = useCallback((data: string) => {
     if (terminalInstance.current) {
       terminalInstance.current.write(data);
     }
   }, []);
 
-  // Send resize to server
   const sendResize = useCallback((cols: number, rows: number) => {
     if (ws?.readyState === WebSocket.OPEN) {
       send({ type: 'pty_resize', cols, rows });
     }
   }, [ws, send]);
 
-  // Initialize terminal
+  // Wait for container to have actual pixel dimensions before initializing terminal
   useEffect(() => {
-    if (!terminalRef.current || terminalInstance.current) return;
+    if (!containerRef.current) return;
+
+    const checkDimensions = () => {
+      const el = containerRef.current;
+      if (!el) return false;
+      const rect = el.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    };
+
+    if (checkDimensions()) {
+      setIsReady(true);
+      return;
+    }
+
+    // Wait for dimensions with ResizeObserver
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          setIsReady(true);
+          observer.disconnect();
+          break;
+        }
+      }
+    });
+
+    observer.observe(containerRef.current);
+
+    // Fallback timeout
+    const timeout = setTimeout(() => setIsReady(true), 500);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  // Initialize terminal once container has dimensions
+  useEffect(() => {
+    if (!isReady || !terminalRef.current || terminalInstance.current) return;
 
     const term = new Terminal({
       cursorBlink: true,
@@ -56,140 +82,90 @@ export const TerminalPanel: React.FC = () => {
         foreground: '#d4d4d4',
         cursor: '#d4d4d4',
         selectionBackground: 'rgba(74, 158, 255, 0.3)',
-        black: '#000000',
-        red: '#cd3131',
-        green: '#0dbc79',
-        yellow: '#e5e510',
-        blue: '#2472c8',
-        magenta: '#bc3fbc',
-        cyan: '#11a8cd',
-        white: '#e5e5e5',
-        brightBlack: '#666666',
-        brightRed: '#f14c4c',
-        brightGreen: '#23d18b',
-        brightYellow: '#f5f543',
-        brightBlue: '#3b8eea',
-        brightMagenta: '#d670d6',
-        brightCyan: '#29b8db',
-        brightWhite: '#e5e5e5',
       },
       scrollback: 10000,
       convertEol: true,
       allowProposedApi: true,
-      // TUI (Claude Code) support:
-      screenReaderMode: false,
-      windowsMode: false,
-      // Disable bell to avoid issues
-      bellStyle: 'none',
-      // Proper handling of alternate screen buffer
-      altClickMovesCursor: false,
     });
 
     const fitAddon = new FitAddon();
-    const searchAddon = new SearchAddon();
-    const canvasAddon = new CanvasAddon();
-
     term.loadAddon(fitAddon);
-    term.loadAddon(searchAddon);
+    term.loadAddon(new SearchAddon());
     term.loadAddon(new WebLinksAddon());
-    term.loadAddon(canvasAddon);
+    term.loadAddon(new CanvasAddon());
 
     term.open(terminalRef.current);
+    terminalInstance.current = term;
+    fitAddonRef.current = fitAddon;
 
-    // Handle keyboard input (typing and pastes via xterm)
+    // Initial fit and resize
+    fitAddon.fit();
+    const { cols, rows } = term;
+    sendResize(cols, rows);
+
+    // Clear terminal to remove any content from wrong-sized PTY output
+    term.clear();
+
+    // Send resize again after a tick to ensure PTY syncs
+    setTimeout(() => {
+      if (terminalInstance.current && fitAddonRef.current) {
+        fitAddonRef.current.fit();
+        const { cols, rows } = terminalInstance.current;
+        sendResize(cols, rows);
+      }
+    }, 100);
+
     term.onData((data) => {
-      // Send keystrokes to server
       send({ type: 'chat_input', data });
     });
 
-    // Handle special key combos
     term.attachCustomKeyEventHandler((e) => {
       if (e.type !== 'keydown') return true;
-
       const key = e.key.toLowerCase();
-
-      // Ctrl+C: send interrupt to terminal (not browser copy)
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && key === 'c') {
-        return true; // Let xterm handle (sends \x03 ETX to bash)
-      }
-
-      // Ctrl+Shift+C: browser copy
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'c') {
-        return false; // Let browser handle copy
-      }
-
-      // Ctrl+V: paste (handled by paste event)
-      if ((e.ctrlKey || e.metaKey) && key === 'v') {
-        return false;
-      }
-
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && key === 'c') return true;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'c') return false;
+      if ((e.ctrlKey || e.metaKey) && key === 'v') return false;
       return true;
     });
 
-    // Handle browser paste events (Ctrl+V/Cmd+V)
     const handlePaste = async (e: ClipboardEvent) => {
       e.preventDefault();
       const text = e.clipboardData?.getData('text');
-      if (text && terminalInstance.current) {
-        // Send paste content as if typed
-        send({ type: 'chat_input', data: text });
-      }
+      if (text) send({ type: 'chat_input', data: text });
     };
 
-    // Add paste listener to terminal element
-    const termElement = terminalRef.current;
-    termElement.addEventListener('paste', handlePaste as unknown as EventListener);
+    const el = terminalRef.current;
+    el.addEventListener('paste', handlePaste as unknown as EventListener);
 
-    // Handle resize
     const resizeObserver = new ResizeObserver(() => {
+      if (!terminalInstance.current) return;
       fitAddon.fit();
       const { cols, rows } = term;
       sendResize(cols, rows);
     });
-
-    if (terminalRef.current.parentElement) {
-      resizeObserver.observe(terminalRef.current.parentElement);
-    }
-
-    // Initial fit
-    fitAddon.fit();
-
-    // Clear terminal on init (removes any stale content)
-    term.clear();
-
-    terminalInstance.current = term;
-    fitAddonRef.current = fitAddon;
+    resizeObserver.observe(el.parentElement!);
 
     return () => {
       resizeObserver.disconnect();
-      termElement.removeEventListener('paste', handlePaste);
+      el.removeEventListener('paste', handlePaste as unknown as EventListener);
       term.dispose();
       terminalInstance.current = null;
       fitAddonRef.current = null;
     };
-  }, [send, sendResize]);
+  }, [isReady, send, sendResize]);
 
-  // Handle WebSocket messages
   useEffect(() => {
     if (!ws) return;
 
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-
         switch (message.type) {
           case 'pty_output':
-            // Ensure data is a string (handle Buffer serialization if needed)
-            const text = typeof message.data === 'string' ? message.data :
-              (message.data?.type === 'Buffer' ? new TextDecoder().decode(new Uint8Array(message.data.data)) : String(message.data));
-            handlePtyOutput(text);
+            handlePtyOutput(message.data);
             break;
           case 'connected':
-            console.log('[Terminal] Connected with clientId:', message.clientId);
             setConnectionStatus('connected');
-            break;
-          case 'vite_ready':
-            console.log('[Terminal] Vite ready on port:', message.port);
             break;
           case 'error':
             console.error('[Terminal] Server error:', message.message);
@@ -202,43 +178,38 @@ export const TerminalPanel: React.FC = () => {
 
     ws.onopen = () => {
       setConnectionStatus('connected');
-      // Send initial resize
       if (terminalInstance.current && fitAddonRef.current) {
+        // Clear terminal and force re-render
+        terminalInstance.current.clear();
+        terminalInstance.current.scrollToBottom();
+
         fitAddonRef.current.fit();
         const { cols, rows } = terminalInstance.current;
         sendResize(cols, rows);
+
+        // Clear again after resize to remove any wrapped content
+        setTimeout(() => {
+          terminalInstance.current?.clear();
+        }, 50);
       }
     };
 
     ws.onclose = () => {
       setConnectionStatus('disconnected');
-      // Clear terminal to avoid stale content on reconnect
-      if (terminalInstance.current) {
-        terminalInstance.current.clear();
-      }
+      terminalInstance.current?.clear();
     };
 
-    ws.onerror = () => {
-      setConnectionStatus('disconnected');
-    };
+    ws.onerror = () => setConnectionStatus('disconnected');
   }, [ws, handlePtyOutput, sendResize]);
 
-  const getStatusClass = () => {
-    switch (connectionStatus) {
-      case 'connecting': return 'connecting';
-      case 'connected': return 'connected';
-      case 'disconnected': return 'disconnected';
-    }
-  };
-
   return (
-    <div className="terminal-panel">
+    <div className="terminal-panel" ref={containerRef}>
       <div className="terminal-panel__header">
         <div className="terminal-panel__title">
           <span>Terminal</span>
         </div>
         <div className="terminal-panel__status">
-          <div className={`terminal-panel__status-dot ${getStatusClass()}`} />
+          <div className={`terminal-panel__status-dot ${connectionStatus}`} />
           <span style={{ fontSize: '11px', color: '#888' }}>
             {connectionStatus === 'connected' ? 'Claude Code' : connectionStatus}
           </span>

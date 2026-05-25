@@ -44,7 +44,7 @@ export const ResizableSplit: React.FC<ResizableSplitProps> = ({
     setIsDragging(false);
   }, []);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((_e: React.TouchEvent) => {
     setIsDragging(true);
   }, []);
 

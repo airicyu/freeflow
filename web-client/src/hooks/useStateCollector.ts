@@ -164,7 +164,7 @@ export function executeFallbackCollection(): Record<string, StateValue> {
  */
 export function useStateCollector(options: UseStateCollectorOptions = {}) {
   const { debounceMs = 500, fallbackCollector = executeFallbackCollection } = options;
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSyncRef = useRef<number>(0);
 
   const collect = useCallback(async (): Promise<StateCollectionResult> => {

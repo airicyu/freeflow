@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import react from '@vitejs/plugin-react-swc';
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3002, // Web client runs on 3002, Bun server on 3000, Playground on 3001
+    port: 3002,
     proxy: {
       '/ws': {
         target: 'ws://localhost:3000',
@@ -14,5 +14,11 @@ export default defineConfig({
         target: 'http://localhost:3000',
       },
     },
+  },
+  preview: {
+    port: 3002,
+  },
+  build: {
+    chunkSizeWarningLimit: 600,
   },
 });
