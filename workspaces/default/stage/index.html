@@ -3,20 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome</title>
+  <title>Freeflow - Your AI Playground</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
-    <div class="welcome-center">
-      <h1>Welcome</h1>
-      <p>This is your playground. Ask me to create something.</p>
+    <div class="welcome">
+      <div class="welcome-icon">✦</div>
+      <h1>Welcome to Your Playground</h1>
+      <p class="tagline">Chat with me on the left, and I'll build it here on the right.</p>
+
+      <div class="suggestions">
+        <p class="hint">Try asking:</p>
+        <div class="prompts">
+          <button class="prompt">"Map out a workflow"</button>
+          <button class="prompt">"Explore an idea"</button>
+          <button class="prompt">"Sketch a concept"</button>
+        </div>
+      </div>
+
+      <div class="chat-hint">
+        <span class="arrow">←</span>
+        <span>Start in the chat panel</span>
+      </div>
     </div>
   </div>
 
   <!-- Freeflow Infrastructure - PROTECTED: Do NOT remove -->
-  <script src="freeflow-core.js"></script>
-  <script src="freeflow-collectors.js"></script>
+  <script src="/_shared/freeflow-core.js"></script>
+  <script src="/_shared/freeflow-collectors.js"></script>
   <!-- App Logic - AI Editable: Clear/modify content, keep script tag -->
   <script src="app.js"></script>
 </body>

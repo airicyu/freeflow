@@ -3,9 +3,16 @@
  */
 import { join } from "path";
 import { existsSync, mkdirSync, readdirSync, statSync } from "fs";
-import { CONFIG, getWorkspacePaths, ensureWorkspace, copyClaudeSkills } from "./config";
+import { CONFIG, getWorkspacePaths, ensureWorkspace, copyAgentSkills } from "./config";
 import { logger } from "./logger";
 import type { Workspace, WorkspaceType } from "./types";
+
+// CORS headers for cross-origin requests
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
 
 const workspaces = new Map<string, Workspace>();
 
@@ -50,7 +57,7 @@ export function getOrCreateWorkspace(id: string, type: WorkspaceType): Workspace
 
   const paths = getWorkspacePaths(id, type);
   ensureWorkspace(id, type);
-  copyClaudeSkills(id, type);
+  copyAgentSkills(id, type);
 
   const workspace: Workspace = {
     id,
@@ -144,6 +151,7 @@ async function serveFile(filepath: string, contentType: string): Promise<Respons
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "no-cache",
+        ...CORS_HEADERS,
       },
     });
   } catch (err) {
@@ -155,7 +163,7 @@ async function serveFile(filepath: string, contentType: string): Promise<Respons
 /**
  * Get content type from file extension
  */
-function getContentType(filepath: string): string {
+export function getContentType(filepath: string): string {
   const ext = filepath.split(".").pop()?.toLowerCase();
   const types: Record<string, string> = {
     html: "text/html",

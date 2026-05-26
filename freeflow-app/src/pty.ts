@@ -1,5 +1,5 @@
 /**
- * PTY module - Claude Code process management with restart handling
+ * PTY module - Agent Cli process management with restart handling
  */
 import type { Subprocess } from "bun";
 import { CONFIG, getWorkspacePaths } from "./config";
@@ -63,12 +63,12 @@ export function killPty(): void {
   }
 }
 
-export function spawnClaudePTY(workspaceId: string = CONFIG.DEFAULT_WORKSPACE): Subprocess | null {
+export function spawnAgentCliPTY(workspaceId: string = CONFIG.DEFAULT_WORKSPACE): Subprocess | null {
   const paths = getWorkspacePaths(workspaceId, "named");
-  logger.info(`[PTY] Spawning Claude Code in ${paths.shadowPath}`);
+  logger.info(`[PTY] Spawning AI agent in ${paths.basePath}`);
 
-  const claudeCommand = process.env.CLAUDE_WRAPPER || CONFIG.CLAUDE_CMD;
-  logger.info(`[PTY] Will run: ${claudeCommand}`);
+  const agentCommand = process.env.AGENT_CLI_WRAPPER || CONFIG.AGENT_CLI_CMD;
+  logger.info(`[PTY] Will run: ${agentCommand}`);
 
   try {
     const proc = Bun.spawn({
@@ -86,7 +86,7 @@ export function spawnClaudePTY(workspaceId: string = CONFIG.DEFAULT_WORKSPACE): 
           }
         },
       },
-      cwd: paths.shadowPath,
+      cwd: paths.basePath,
       env: process.env,
     });
 
@@ -94,11 +94,11 @@ export function spawnClaudePTY(workspaceId: string = CONFIG.DEFAULT_WORKSPACE): 
 
     proc.exited.then((exitCode) => {
       const lifetime = Date.now() - spawnTime;
-      logger.info(`[PTY] Claude exited with code ${exitCode} (lived ${lifetime}ms)`);
+      logger.info(`[PTY] Agent CLI exited with code ${exitCode} (lived ${lifetime}ms)`);
       ptyProcess = null;
 
       if (lifetime < 2000) {
-        logger.warn(`[PTY] Claude exited very quickly (${lifetime}ms)`);
+        logger.warn(`[PTY] Agent CLI exited very quickly (${lifetime}ms)`);
       }
 
       ptyRestartState.count++;
@@ -108,7 +108,7 @@ export function spawnClaudePTY(workspaceId: string = CONFIG.DEFAULT_WORKSPACE): 
         logger.error(`[PTY] Max retries reached`);
         broadcastFn?.({
           type: "error",
-          message: `Claude Code failed to start after ${ptyRestartState.maxRetries} attempts`,
+          message: `Agent CLI failed to start after ${ptyRestartState.maxRetries} attempts`,
         });
         return;
       }
@@ -118,7 +118,7 @@ export function spawnClaudePTY(workspaceId: string = CONFIG.DEFAULT_WORKSPACE): 
 
       setTimeout(() => {
         if (!ptyProcess) {
-          const newPty = spawnClaudePTY();
+          const newPty = spawnAgentCliPTY();
           if (newPty) ptyProcess = newPty;
         }
       }, delay);
@@ -130,7 +130,7 @@ export function spawnClaudePTY(workspaceId: string = CONFIG.DEFAULT_WORKSPACE): 
           proc.terminal.write('\x1bc');
           proc.terminal.write('clear\r');
           setTimeout(() => {
-            proc.terminal?.write(`${claudeCommand}\r`);
+            proc.terminal?.write(`${agentCommand}\r`);
           }, 100);
         }
       } catch (err) {

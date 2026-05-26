@@ -16,7 +16,25 @@ import {
   recordCommand,
   clearCommandHistory,
 } from "./commands";
-import { resolveWorkspaceFromUrl, serveWorkspaceFile, getOrCreateWorkspace, deployWorkspace } from "./workspace";
+import { resolveWorkspaceFromUrl, serveWorkspaceFile, getOrCreateWorkspace, deployWorkspace, getContentType } from "./workspace";
+
+// CORS headers for cross-origin requests from web client
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+// Handle CORS preflight
+export function handleCors(req: Request): Response | null {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: CORS_HEADERS,
+    });
+  }
+  return null;
+}
 
 // Health check
 function healthHandler(): Response {
@@ -27,7 +45,7 @@ function healthHandler(): Response {
     workspaceRoot: CONFIG.WORKSPACES_ROOT,
     defaultWorkspace: CONFIG.DEFAULT_WORKSPACE,
   }), {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
   });
 }
 
@@ -36,7 +54,7 @@ async function statePostHandler(req: Request): Promise<Response> {
   const body = await req.json().catch(() => ({})) as { syncId?: string };
   requestStateSync(body.syncId);
   return new Response(JSON.stringify({ status: "requested" }), {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
   });
 }
 
@@ -86,14 +104,14 @@ async function commandHandler(req: Request): Promise<Response> {
         count: results.length,
         results,
       }), {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
 
     if (!body.action || !body.selector) {
       return new Response(JSON.stringify({ error: "Missing action or selector" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
 
@@ -117,13 +135,13 @@ async function commandHandler(req: Request): Promise<Response> {
       version: cmd.version,
       id: cmd.id,
     }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   } catch (err) {
     logger.error("[Command] Failed to process:", err);
     return new Response(JSON.stringify({ error: "Invalid command" }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   }
 }
@@ -136,7 +154,7 @@ async function workspaceCookingHandler(req: Request): Promise<Response> {
     if (!match) {
       return new Response(JSON.stringify({ error: "Invalid workspace path" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
 
@@ -156,13 +174,13 @@ async function workspaceCookingHandler(req: Request): Promise<Response> {
       updateId: message.updateId,
       phase: "cooking",
     }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   } catch (err) {
     logger.error("[Routes] Cooking handler failed:", err);
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   }
 }
@@ -175,7 +193,7 @@ async function workspacePreDeployHandler(req: Request): Promise<Response> {
     if (!match) {
       return new Response(JSON.stringify({ error: "Invalid workspace path" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
 
@@ -194,13 +212,13 @@ async function workspacePreDeployHandler(req: Request): Promise<Response> {
       updateId: message.updateId,
       phase: "pre_deploy",
     }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   } catch (err) {
     logger.error("[Routes] Pre-deploy handler failed:", err);
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   }
 }
@@ -213,7 +231,7 @@ async function workspaceReloadHandler(req: Request): Promise<Response> {
     if (!match) {
       return new Response(JSON.stringify({ error: "Invalid workspace path" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
 
@@ -232,13 +250,13 @@ async function workspaceReloadHandler(req: Request): Promise<Response> {
       updateId: message.updateId,
       phase: "reload",
     }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   } catch (err) {
     logger.error("[Routes] Reload handler failed:", err);
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   }
 }
@@ -251,7 +269,7 @@ async function workspaceDeployHandler(req: Request): Promise<Response> {
     if (!match) {
       return new Response(JSON.stringify({ error: "Invalid workspace path" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
 
@@ -266,7 +284,7 @@ async function workspaceDeployHandler(req: Request): Promise<Response> {
         workspace: workspaceId,
         message: "Deployed shadow to stage",
       }), {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     } else {
       return new Response(JSON.stringify({
@@ -274,14 +292,14 @@ async function workspaceDeployHandler(req: Request): Promise<Response> {
         details: result.error,
       }), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
   } catch (err) {
     logger.error("[Routes] Deploy handler failed:", err);
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   }
 }
@@ -293,7 +311,7 @@ async function workspaceStateHandler(req: Request): Promise<Response> {
   if (!match) {
     return new Response(JSON.stringify({ error: "Invalid workspace path" }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   }
 
@@ -305,26 +323,26 @@ async function workspaceStateHandler(req: Request): Promise<Response> {
     const statePath = join(workspace.stagePath, "state.json");
     if (!existsSync(statePath)) {
       return new Response(JSON.stringify({ state: {} }), {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
 
     try {
       const content = await Bun.file(statePath).text();
       return new Response(content, {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     } catch (err) {
       return new Response(JSON.stringify({ state: {}, error: "Failed to read state" }), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
   }
 
   return new Response(JSON.stringify({ error: "Method not allowed" }), {
     status: 405,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
   });
 }
 
@@ -342,6 +360,10 @@ const routes = [
 
 // Async router
 export async function handleRouteAsync(req: Request, server: Server<WebSocketData>): Promise<Response | null> {
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
   const url = new URL(req.url);
 
   // Check exact path routes first
@@ -358,6 +380,25 @@ export async function handleRouteAsync(req: Request, server: Server<WebSocketDat
         return result instanceof Promise ? await result : result;
       }
     }
+  }
+
+  // Handle shared infrastructure file serving
+  // /_shared/* -> workspaces/_shared/*
+  const sharedMatch = url.pathname.match(/^\/_shared\/(.+)$/);
+  if (sharedMatch) {
+    const filepath = sharedMatch[1];
+    const sharedPath = join(CONFIG.WORKSPACES_ROOT, "_shared", filepath);
+    if (existsSync(sharedPath)) {
+      const file = Bun.file(sharedPath);
+      return new Response(file, {
+        headers: {
+          "Content-Type": getContentType(filepath),
+          "Cache-Control": "no-cache",
+          ...CORS_HEADERS,
+        },
+      });
+    }
+    return new Response("Not Found", { status: 404 });
   }
 
   // Handle workspace static file serving

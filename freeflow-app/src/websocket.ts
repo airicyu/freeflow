@@ -4,7 +4,7 @@
 import type { ServerWebSocket } from "bun";
 import { logger } from "./logger";
 import type { WebSocketData, ClientWebSocket, MessageType } from "./types";
-import { initPty, spawnClaudePTY, getPty, killPty, resizePty, writeToPty } from "./pty";
+import { initPty, spawnAgentCliPTY, getPty, killPty, resizePty, writeToPty } from "./pty";
 import { writeStateFile, completeSync } from "./state";
 import { CONFIG } from "./config";
 
@@ -102,7 +102,7 @@ export function handleMessage(ws: ClientWebSocket, rawMessage: string): void {
       case "state_sync_result":
         completeSync();
         if (message.type === "state_sync_result") {
-          const { updateId, isFinal } = message.data;
+          const { updateId, isFinal } = message.data as { updateId: string;state: unknown;isFinal: boolean;}
           if (updateId) {
             logger.info(`[WS] Received state_sync_result for update ${updateId}, final: ${isFinal}`);
             if (isFinal) {

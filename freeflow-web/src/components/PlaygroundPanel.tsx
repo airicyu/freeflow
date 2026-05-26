@@ -223,14 +223,6 @@ type UiPhaseMessage =
         </div>
         <div className="playground-panel__actions">
           <button
-            className={`playground-panel__button ${syncInProgress ? 'primary' : ''}`}
-            onClick={handleSync}
-            disabled={syncInProgress || status !== 'ready'}
-            title="Sync current state to AI"
-          >
-            {syncInProgress ? 'Syncing...' : 'Sync State'}
-          </button>
-          <button
             className="playground-panel__button"
             onClick={handleReload}
             title="Reload playground"

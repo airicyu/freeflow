@@ -18,7 +18,7 @@ export const CONFIG = {
   SESSIONS_DIR,
   SESSIONS_PATH: join(WORKSPACES_ROOT, SESSIONS_DIR),
   DEFAULT_WORKSPACE: process.env.DEFAULT_WORKSPACE || "default",
-  CLAUDE_CMD: process.env.CLAUDE_CMD || "claude",
+  AGENT_CLI_CMD: process.env.AGENT_CLI_CMD || "claude",
   TERM_ROWS: 24,
   TERM_COLS: 80,
   SCROLLBACK: 10000,
@@ -57,33 +57,24 @@ export function ensureWorkspace(workspaceId: string, type: "named" | "session" =
 }
 
 /**
- * Copy .claude skills to workspace if not present
+ * Copy .claude skills from template to workspace if not present
+ * Only copies to workspace root, NOT to stage/ or shadow/
  */
-export function copyClaudeSkills(workspaceId: string, type: "named" | "session" = "named") {
+export function copyAgentSkills(workspaceId: string, type: "named" | "session" = "named") {
   const paths = getWorkspacePaths(workspaceId, type);
-  const PROJECT_CLAUDE_DIR = resolve(import.meta.dir, "../../.claude");
-  const WORKSPACE_CLAUDE_DIR = join(paths.stagePath, ".claude");
-  const SHADOW_CLAUDE_DIR = join(paths.shadowPath, ".claude");
+  const TEMPLATE_CLAUDE_DIR = resolve(import.meta.dir, "../../template/default/.claude");
+  const WORKSPACE_CLAUDE_DIR = join(paths.basePath, ".claude");
 
-  if (existsSync(PROJECT_CLAUDE_DIR)) {
-    if (!existsSync(WORKSPACE_CLAUDE_DIR)) {
-      try {
-        cpSync(PROJECT_CLAUDE_DIR, WORKSPACE_CLAUDE_DIR, { recursive: true });
-        console.log(`[Setup] Copied .claude skills to ${WORKSPACE_CLAUDE_DIR}`);
-      } catch (err) {
-        console.warn(`[Setup] Failed to copy .claude to stage: ${err}`);
-      }
-    }
-    if (!existsSync(SHADOW_CLAUDE_DIR)) {
-      try {
-        cpSync(PROJECT_CLAUDE_DIR, SHADOW_CLAUDE_DIR, { recursive: true });
-      } catch (err) {
-        console.warn(`[Setup] Failed to copy .claude to shadow: ${err}`);
-      }
+  if (existsSync(TEMPLATE_CLAUDE_DIR) && !existsSync(WORKSPACE_CLAUDE_DIR)) {
+    try {
+      cpSync(TEMPLATE_CLAUDE_DIR, WORKSPACE_CLAUDE_DIR, { recursive: true });
+      console.log(`[Setup] Copied .claude skills from template to ${WORKSPACE_CLAUDE_DIR}`);
+    } catch (err) {
+      console.warn(`[Setup] Failed to copy .claude to workspace: ${err}`);
     }
   }
 }
 
 // Ensure default workspace exists on startup
 ensureWorkspace(CONFIG.DEFAULT_WORKSPACE, "named");
-copyClaudeSkills(CONFIG.DEFAULT_WORKSPACE, "named");
+copyAgentSkills(CONFIG.DEFAULT_WORKSPACE, "named");

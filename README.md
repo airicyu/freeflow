@@ -1,12 +1,12 @@
 # Freeflow
 
-AI-powered interactive playground where you chat with an AI Brain (Claude Code) in a terminal on the left, and see AI-generated UI come to life in a playground on the right.
+AI-powered interactive playground where you chat with an AI Agent in a terminal on the left, and see AI-generated UI come to life in a playground on the right.
 
-## What is "AI Brain"?
+## What is "AI Agent"?
 
-**AI Brain** = Claude Code running in the terminal PTY. It controls the playground UI through:
+**AI Agent** = AI CLI tool running in the terminal PTY (e.g., Claude Code). It controls the playground UI through:
 - **Live Commands** - Immediate DOM manipulation via HTTP API
-- **Shadow Editing** - File-based changes that deploy to the live UI
+- **Shadow/Stage Workflow** - File-based changes with smooth deploy
 
 ## Architecture
 
@@ -14,34 +14,35 @@ AI-powered interactive playground where you chat with an AI Brain (Claude Code) 
 ┌─────────────────────────────────────────────────────────────────┐
 │  BROWSER                                                        │
 │  ┌──────────────────┬───────────────────────────────────────┐  │
-│  │ Terminal         │  Playground                           │  │
-│  │ (xterm.js)       │  (Vite + iframe)                      │  │
+│  │ Chat             │  Playground                           │  │
+│  │ (xterm.js)       │  (iframe + static files)              │  │
 │  │                  │                                       │  │
-│  │ AI Brain         │  ┌─────────────────────────────────┐  │  │
-│  │ (Claude Code)    │  │                                 │  │  │
+│  │ AI Agent         │  ┌─────────────────────────────────┐  │  │
+│  │ (AI CLI)         │  │                                 │  │  │
 │  │ running in PTY   │  │  Interactive UI (AI-generated)  │  │  │
 │  │                  │  │                                 │  │  │
 │  │ ↕ stdin/stdout   │  └─────────────────────────────────┘  │  │
-│  └───────┬──────────┘  ↑ HMR updates (after deploy)          │  │
-│          │             ↑ Live commands (immediate)            │  │
+│  └───────┬──────────┘                                       │  │
+│          │                                                    │  │
 └──────────┼────────────────────────────────────────────────────┘
            │ WebSocket (messages by type)
            ▼
-┌─────────────────────┐        ┌─────────────────────┐
-│  Bun Server         │◄───────┤  File Deploy        │
-│  • WebSocket hub    │        │  (shadow → stage)   │
-│  • PTY manager      │        │  • rsync / cp       │
-│  • HTTP endpoints   │        │  • HMR trigger      │
-│  • State handler    │        └─────────────────────┘
-└─────────┬───────────┘
-          │
-          │ Spawns
-          ▼
 ┌─────────────────────┐
-│  AI Brain           │
-│  (Claude Code)      │
-│  • Sees shadow/     │  ← AI's edit area
-│  • Sees stage/      │  ← Live UI (read-only)
+│  Bun Server         │◄───────┐
+│  • WebSocket hub    │        │
+│  • PTY manager      │        │
+│  • HTTP endpoints   │        │
+│  • Static file      │   Deploy (shadow → stage)
+│    server           │        │
+└─────────┬───────────┘        │
+          │                    │
+          │ Spawns             │
+          ▼                    │
+┌─────────────────────┐        │
+│  AI Agent           │        │
+│  (AI CLI)           │        │
+│  • Edits shadow/    │────────┘
+│  • Deploys to stage │
 │  • Sends commands   │
 │  • Reads state.json │
 └─────────────────────┘
@@ -49,109 +50,57 @@ AI-powered interactive playground where you chat with an AI Brain (Claude Code) 
 
 ## How It Works
 
-### Three-Panel Layout
+### Two-Panel Layout
 
 | Panel | Technology | Content | Updates |
 |-------|------------|---------|---------|
-| **Terminal** (left) | xterm.js + PTY | Claude Code TUI | Live character-by-character |
-| **Playground** (right) | Vite + iframe | AI-generated UI | Live commands instantly, HMR after deploy |
+| **Chat** (left) | xterm.js + PTY | Claude Code TUI | Live character-by-character |
+| **Playground** (right) | Static files + iframe | AI-generated UI | Live commands instantly, smooth deploy for changes |
 
-### Message Flow (No Channels)
+### Smooth Deploy Workflow
 
 ```
-┌──────────────┐              ┌─────────┐              ┌──────────────┐
-│   Browser    │ ──WebSocket──▶│ Server  │── WebSocket──▶│   Browser    │
-│  (Terminal)  │  chat_input   │         │  pty_output    │  (Terminal)  │
-└──────────────┘              │         │              └──────────────┘
-                              │         │
-┌──────────────┐  HTTP POST   │         │  WebSocket     ┌──────────────┐
-│  AI Brain    │──/command───▶│         │──dom_command───▶│  Playground  │
-│  (curl)      │              │         │                │  (iframe)    │
-└──────────────┘              │         │              └──────────────┘
-                              │         │
-                              │         │◄─── File Watch ───┐
-                              │         │                   │
-                              └────┬────┘              ┌────┴────┐
-                                   │                   │  Stage  │
-                                   │◄── rsync / cp ────┤  (live) │
-                                   │                   └────┬────┘
-                              ┌────┴────┐                  │
-                              │  Shadow │◄─── AI edits
-                              │  (draft)│
-                              └─────────┘
+┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+│ Cooking  │────▶│ Pre-     │────▶│ Deploy   │────▶│ Reload   │
+│ Phase    │     │ Deploy   │     │          │     │          │
+│          │     │          │     │          │     │          │
+│ • Toast  │     │ • Block  │     │ • rsync  │     │ • State  │
+│ • Live   │     │   input  │     │   shadow │     │   restore│
+│   cmd OK │     │ • Sync   │     │   →stage │     │ • New UI │
+│ • User   │     │   state  │     │          │     │   shown  │
+│   works  │     │          │     │          │     │          │
+└──────────┘     └──────────┘     └──────────┘     └──────────┘
 ```
 
-### Message Types (No Channels)
+### Message Types
 
-| Direction | Type | Payload | Purpose |
-|-----------|------|---------|---------|
-| C → S | `chat_input` | `{data: string}` | Terminal keystrokes to PTY |
-| C → S | `pty_resize` | `{rows, cols}` | Terminal resize |
-| C → S | `state_sync_result` | `{syncId, state, timestamp}` | UI state from playground |
-| S → C | `pty_output` | `{data: string}` | PTY output to display |
-| S → C | `dom_command` | `{action, selector, value, ...}` | Live command to execute |
-| S → C | `request_state_sync` | `{syncId?}` | Ask playground for state |
-| HTTP | `command` | `{action, selector}` or `{commands: []}` | AI sends live command(s) |
-
-**Key:** No logical channels. All messages use same WebSocket, routed by `type` field.
+| Direction | Type | Purpose |
+|-----------|------|---------|
+| C → S | `chat_input` | Terminal keystrokes to PTY |
+| S → C | `pty_output` | PTY output to display |
+| S → C | `dom_command` | Live command to execute in playground |
+| S → C | `ui_cooking` | Show non-blocking toast |
+| S → C | `ui_pre_deploy` | Block input, sync final state |
+| S → C | `ui_reload` | Trigger page reload |
 
 ## Terminology
 
-| Term | Definition | Access |
-|------|------------|--------|
-| **AI Brain** | Claude Code in terminal | AI only |
-| **Playground** | Right panel iframe (live UI) | User interacts |
-| **Terminal** | Left panel (xterm.js) | User types, sees AI output |
-| **Shadow** | `shadow/` folder | AI edits (draft workspace) |
-| **Stage** | `stage/` folder | Live files (Vite serves this) |
-| **Live Command** | HTTP POST `/command` | Immediate DOM update |
-| **Deploy** | `rsync shadow/ stage/` | Publish draft to live |
-
-## Two Update Modes
-
-### Mode 1: Live Commands (Quick changes)
-
-For: checkbox toggles, text updates, button clicks, element removal
-
-```bash
-# Single command
-curl -X POST /command -d '{"action":"uncheck","selector":"#task1"}'
-
-# Batch commands (atomic)
-curl -X POST /command -d '{
-  "commands": [
-    {"action":"uncheck","selector":"#task1"},
-    {"action":"check","selector":"#task2"},
-    {"action":"appendHtml","selector":"#list","value":"<li>New</li>"}
-  ]
-}'
-```
-
-**Result:** User sees change instantly. Browser console shows: `[Playground] Received dom_command`
-
-### Mode 2: Shadow Workflow (Complex changes)
-
-For: New components, redesigns, multi-file refactors
-
-```bash
-# Edit in shadow (no HMR during edits)
-echo "html" > shadow/index.html
-echo "css" > shadow/style.css
-
-# Deploy when ready
-bash .claude/skills/shadow-staging/deploy.sh
-
-# Vite HMR refreshes with final result
-```
-
-**Result:** User sees nothing during edits. Final result appears atomically.
+| Term | Definition |
+|------|------------|
+| **AI Agent** | AI component that controls the playground (runs in terminal chat) |
+| **Playground** | Right panel iframe (live UI) |
+| **Chat** | Left panel (xterm.js) |
+| **Shadow** | `shadow/` folder - AI's draft workspace |
+| **Stage** | `stage/` folder - Live files served to user |
+| **Live Command** | HTTP POST `/command` - Immediate DOM update |
+| **Deploy** | `rsync shadow/ stage/` - Publish draft to live |
 
 ## Quick Start
 
 ### Prerequisites
 
 1. [Bun](https://bun.sh) installed
-2. Claude Code CLI installed (`npm install -g @anthropic-ai/claude-code`)
+2. AI CLI tool installed (e.g., Claude Code: `npm install -g @anthropic-ai/claude-code`)
 
 ### Installation
 
@@ -162,86 +111,93 @@ bun run install:all
 
 ### Running
 
-**Terminal 1 - App Server:**
+**Single command (recommended):**
 ```bash
-bun run dev:server
+./start-dev.sh
 ```
 
-**Terminal 2 - Web UI:**
+Or manually in separate terminals:
 ```bash
-bun run dev:client
+# Terminal 1 - Server
+cd freeflow-app && bun run dev
+
+# Terminal 2 - Web UI
+cd freeflow-web && bun run dev
 ```
 
 **Access:**
 - Web UI: http://localhost:3002
-- WebSocket: ws://localhost:3000
-- Playground: http://localhost:3000/workspaces/default/
+
+### Stopping
+
+Press `Ctrl+C` in the terminal running `./start-dev.sh` - both server and client will terminate together.
 
 ## Project Structure
 
 ```
 freeflow/
-├── freeflow-app/            # Bun server (WebSocket + PTY + HTTP)
-│   ├── src/server.ts
+├── freeflow-app/            # Bun server (WebSocket + PTY + HTTP + static files)
+│   ├── src/
+│   │   ├── server.ts
+│   │   ├── routes.ts
+│   │   ├── workspace.ts
+│   │   └── config.ts
 │   └── package.json
 │
 ├── freeflow-web/            # React web client
 │   ├── src/
 │   │   ├── App.tsx
 │   │   ├── components/
-│   │   │   ├── TerminalPanel.tsx
-│   │   │   ├── PlaygroundPanel.tsx
-│   │   │   └── ResizableSplit.tsx
+│   │   │   ├── TerminalPanel.tsx    # Chat panel
+│   │   │   ├── PlaygroundPanel.tsx  # Playground iframe
+│   │   │   └── ResizableSplit.tsx   # Draggable divider
 │   │   └── hooks/
 │   │       └── useWebSocket.ts
 │   └── package.json
 │
 ├── workspaces/
-│   └── default/             # AI's workspace
-│       ├── stage/           # ← Live UI (server serves)
-│       │   ├── index.html
-│       │   ├── style.css
-│       │   ├── main.js      # Live command executor
-│       │   └── state.json   # User interaction state
+│   ├── _shared/             # Infrastructure files
+│   │   ├── freeflow-core.js
+│   │   └── freeflow-collectors.js
+│   │
+│   └── default/             # Default workspace
+│       ├── .claude/         # AI skills and config
+│       │   ├── CLAUDE.md
+│       │   └── skills/
+│       │       ├── playground-update/
+│       │       │   ├── SKILL.md
+│       │       │   └── deploy.sh
+│       │       └── playground-intent/
+│       │           └── SKILL.md
 │       │
-│       ├── shadow/          # ← AI's draft workspace
-│       │   ├── index.html
-│       │   ├── style.css
-│       │   └── main.js
-│       │
-│       └── .claude/skills/shadow-staging/
-│           ├── SKILL.md     # AI skill documentation
-│           └── deploy.sh    # Deploy script
+│       ├── stage/           # Live UI (served by Bun)
+│       └── shadow/          # AI's draft workspace
 │
+├── start-dev.sh             # Single command to start both
 └── README.md
 ```
 
 ## Key Features
 
-- **Full Claude Code TUI** in browser terminal
+- **Full AI CLI TUI** in browser terminal (currently Claude Code)
 - **Live Commands** - HTTP API for instant DOM manipulation
-- **Shadow/Stage** - Two-folder atomic deployment workflow
+- **Smooth Deploy** - Phased workflow (cooking → pre-deploy → reload)
 - **State Sync** - Bidirectional: AI creates UI, captures user interactions
-- **Shared WebSocket** - Single connection for terminal + playground
-- **Message-based routing** - No channels, just message types
+- **Single Start Command** - `./start-dev.sh` starts both server and client
+- **Clean Termination** - Ctrl+C stops everything, no stale processes
 
-## Common AI Commands
+## Common Commands
 
 ```bash
+# Start everything
+./start-dev.sh
+
 # Read current playground state
-cat stage/state.json
+cat workspaces/default/stage/state.json
 
-# Send live command
-curl -X POST http://localhost:3000/command \
-  -d '{"action":"setText","selector":"#title","value":"Hello"}'
+# Deploy shadow to stage (from within workspace)
+bash .claude/skills/playground-update/deploy.sh
 
-# Deploy shadow changes
-bash .claude/skills/shadow-staging/deploy.sh
-
-# Request state sync
-curl -X POST http://localhost:3000/sync
+# Or shorthand (works from shadow/ or stage/)
+bash deploy.sh
 ```
-
-## License
-
-MIT

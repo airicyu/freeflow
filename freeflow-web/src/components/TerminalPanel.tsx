@@ -76,7 +76,7 @@ export const TerminalPanel: React.FC = () => {
       cursorBlink: true,
       cursorStyle: 'block',
       fontSize: 14,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      fontFamily: '"Cascadia Code", Monaco, Menlo, "Courier New", monospace',
       theme: {
         background: '#1e1e1e',
         foreground: '#d4d4d4',
@@ -206,12 +206,12 @@ export const TerminalPanel: React.FC = () => {
     <div className="terminal-panel" ref={containerRef}>
       <div className="terminal-panel__header">
         <div className="terminal-panel__title">
-          <span>Terminal</span>
+          <span>Chat</span>
         </div>
         <div className="terminal-panel__status">
           <div className={`terminal-panel__status-dot ${connectionStatus}`} />
           <span style={{ fontSize: '11px', color: '#888' }}>
-            {connectionStatus === 'connected' ? 'Claude Code' : connectionStatus}
+            {connectionStatus === 'connected' ? 'AI Agent' : connectionStatus}
           </span>
         </div>
       </div>

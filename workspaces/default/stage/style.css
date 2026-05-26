@@ -1,11 +1,17 @@
-/* Freeflow Playground Styles */
+/* Welcome Screen Styles */
 
 :root {
-  --primary-color: #4a9eff;
-  --primary-hover: #3a8eef;
-  --bg-color: #0f172a;
-  --text-color: #f8fafc;
-  --text-muted: #94a3b8;
+  --primary-color: #8b5a2b;
+  --primary-light: #d4a574;
+  --bg-color: #fefcf8;
+  --bg-gradient-start: #fdf8f0;
+  --bg-gradient-end: #f5efe6;
+  --text-color: #4a3f35;
+  --text-muted: #7d6b5d;
+  --text-subtle: #a89b8c;
+  --card-bg: rgba(255, 253, 248, 0.8);
+  --card-border: rgba(139, 90, 43, 0.12);
+  --prompt-hover: rgba(212, 165, 116, 0.15);
 }
 
 * {
@@ -15,8 +21,8 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: var(--bg-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
   color: var(--text-color);
   line-height: 1.6;
   min-height: 100vh;
@@ -27,24 +33,129 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.welcome-center {
-  text-align: center;
   padding: 2rem;
 }
 
-.welcome-center h1 {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, var(--primary-color), #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* Welcome Container */
+.welcome {
+  text-align: center;
+  max-width: 600px;
+  animation: fadeIn 0.8s ease-out;
 }
 
-.welcome-center p {
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Icon */
+.welcome-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Headline */
+.welcome h1 {
+  font-size: 2.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+/* Tagline */
+.tagline {
   color: var(--text-muted);
+  font-size: 1.125rem;
+  margin-bottom: 3rem;
+}
+
+/* Suggestions Card */
+.suggestions {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.hint {
+  color: var(--text-subtle);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Prompt Buttons */
+.prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.prompt {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 0.875rem 1.5rem;
+  color: var(--text-color);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.prompt:hover {
+  background: var(--prompt-hover);
+  border-color: var(--primary-light);
+  transform: translateX(4px);
+}
+
+/* Chat Hint */
+.chat-hint {
+  color: var(--text-subtle);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.arrow {
   font-size: 1.25rem;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-4px); }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .welcome h1 {
+    font-size: 1.75rem;
+  }
+
+  .tagline {
+    font-size: 1rem;
+  }
+
+  .suggestions {
+    padding: 1.5rem;
+  }
 }

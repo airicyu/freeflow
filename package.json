@@ -4,10 +4,10 @@
   "description": "Freeflow - AI-powered interactive playground with Claude Code",
   "type": "module",
   "scripts": {
-    "dev:server": "cd freeflow-app && bun run dev",
+    "start": "./start-dev.sh",
+    "start:server": "cd freeflow-app && bun run start",
     "dev:client": "cd freeflow-web && bun run dev",
     "build": "cd freeflow-web && bun run build",
-    "start:server": "cd freeflow-app && bun run start",
     "start:client": "cd freeflow-web && bun run preview",
     "stop": "taskkill /F /IM bun.exe 2>nul || killall -9 bun 2>/dev/null || echo 'Stopped'",
     "install:all": "bun install && cd freeflow-app && bun install && cd ../freeflow-web && bun install"

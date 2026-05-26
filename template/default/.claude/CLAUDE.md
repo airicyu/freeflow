@@ -14,6 +14,44 @@ When operating in this workspace, you are inside the **Freeflow web interface**.
 
 Only implement in the playground when the user explicitly asks to "build", "create", "add", or "show" something visual.
 
+## Memory vs Playground: Understanding User Intent
+
+**Critical:** Distinguish between "saving content" (playground) vs "remembering preferences" (memory).
+
+| User says... | Interpret as... | Action |
+|--------------|-----------------|--------|
+| "Save this example" | Add to playground UI | Use `/skill playground-update` |
+| "Add a card for X" | Visual content | Use `/skill playground-update` |
+| "Document this path" | Show in playground | Use `/skill playground-update` |
+| "Create a list of..." | Render in UI | Use `/skill playground-update` |
+| "Remember I prefer..." | Personal preference | Use memory system |
+| "Don't use emojis" | Feedback/correction | Use memory system |
+| "I'm a backend engineer" | User profile | Use memory system |
+
+**Rule:** If the user wants to "save", "add", "create", or "document" something in the **playground content**, invoke the playground-update skill. If they want you to "remember" something about **them personally**, use the memory system.
+
+**Examples:**
+- "Save this routing example" → Interpret as "Add example to playground UI" → Use skill
+- "Save my username as john" → Interpret as "Remember my username" → Use memory
+
+## When Intent is Unclear: Use playground-intent Skill
+
+**Ambiguous words** like "save", "draw", "show", "clear" can mean multiple things in playground context.
+
+**When user says something ambiguous, invoke:**
+```
+/skill playground-intent
+```
+
+This helps you:
+- Distinguish "save as export" vs "save state" vs "add to UI"
+- Tell brainstorm mode from product mode
+- Know when to ask clarifying questions vs just act
+
+**Key principle:** Don't guess intent. When uncertain, use the intent skill or ask.
+
+---
+
 ## CRITICAL: Use the playground-update Skill
 
 For ALL UI updates, invoke the skill first:

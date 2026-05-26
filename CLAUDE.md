@@ -3,132 +3,120 @@
 ## Project Overview
 
 Freeflow is an AI-powered interactive playground with two-pane layout:
-- **Left**: Terminal (xterm.js) running Claude Code via PTY
-- **Right**: Playground (Vite + vanilla JS) showing AI-generated UI
+- **Left**: Chat (xterm.js) running AI CLI via PTY
+- **Right**: Playground (static HTML/JS) showing AI-generated UI
 
-## Dual-Mode Update Architecture
+## Smooth Deploy Architecture
 
-Freeflow supports two update strategies to prevent HMR flicker and user interruption:
+Freeflow uses a phased update workflow for smooth user experience:
 
-### Mode 1: Bulk Update (Shadow → Swap → HMR)
-For large changes:
-1. Claude edits files in `workspaces/shadow/` (doesn't affect live UI)
-2. User clicks **"Apply Changes"** button when ready
-3. Server copies shadow files to `workspaces/default/`
-4. HMR refreshes once with final state
-
-### Mode 2: Live + Background (Immediate → Shadow → Later)
-For small incremental changes:
-1. Claude sends live DOM commands via `/command` endpoint
-2. UI updates immediately without reload
-3. Claude ALSO edits shadow workspace in background
-4. On next "Apply Changes", source becomes authoritative
+```
+PHASE 1: UPDATING          PHASE 2: PRE-DEPLOY       PHASE 3: RELOAD
+─────────────────          ───────────────────       ─────────────
+Send ui_cooking             Send ui_pre_deploy        Deploy shadow→stage
+Show toast                  Block input                ↓
+User works normally         Send final state          Send ui_reload
+    ↓                           ↓                      ↓
+[Live commands] → Read state.json → Reload page
+(optional)          Update shadow
+                    with state
+```
 
 ### Workspace Layout
+
 ```
 workspaces/
-└── default/              # Workspace root (git repo)
-    ├── .git/             # Git repository
-    ├── .claude/          # Claude configuration
+└── default/              # Workspace root
+    ├── .claude/          # AI skills and configuration
+    │   ├── CLAUDE.md     # This file
+    │   └── skills/
+    │       └── playground-update/
+    │           ├── SKILL.md      # Deploy workflow skill
+    │           └── deploy.sh     # Deploy script
     │
-    ├── stage/            # ← Live workspace (Vite serves this)
+    ├── stage/            # ← Live UI (served by Bun)
     │   ├── index.html    # Current UI displayed to user
     │   ├── style.css
-    │   ├── main.js
-    │   └── state.json    # User state (collected)
+    │   ├── app.js
+    │   └── state.json    # Auto-synced user state
     │
-    └── shadow/           # ← Shadow workspace (AI edits here)
-        ├── index.html    # Pending changes (no HMR trigger)
+    └── shadow/           # ← AI edit workspace
+        ├── index.html    # Draft changes
         ├── style.css
-        └── main.js
+        └── app.js
 ```
 
-### Key Insight: Claude Code operates on **files in the shadow workspace**, optionally sending live commands for immediate feedback. Vite only sees changes after user-approved swap.
+### Key Files
 
-## How Claude (You) Fits In
+- `stage/` - Live files served to user (read-only for AI)
+- `shadow/` - AI's workspace for editing (draft area)
+- `_shared/` - Infrastructure files (freeflow-core.js, etc.)
+- `.claude/skills/` - AI skills for the playground
 
-As Claude Code running in the PTY:
-1. User types requests in terminal
+## How the AI Agent Fits In
+
+As the AI component running in the PTY:
+1. User types requests in chat
 2. You receive the message naturally
-3. You **edit files** in the workspace using your file tools
-4. Vite HMR updates the playground instantly
+3. You **edit files** in `shadow/` using your file tools
+4. Use the `playground-update` skill for smooth deploy
 5. You can **read state.json** to see user interactions
+
+## The Playground-Update Skill
+
+**ALWAYS invoke this skill for UI updates:**
+```
+/skill playground-update
+```
+
+This skill gives you the full playbook for:
+- **Mode 1**: Live commands for quick tweaks
+- **Mode 2**: Full shadow→stage deploy workflow
 
 ## State Collection
 
-When the user wants you to know what's in the UI (form values, selections):
+State auto-syncs every 5 seconds. Read `stage/state.json` to see user input:
 
-1. **You generated the UI** → You know the element IDs/classes
-2. You should create/maintain `state-collector.js`
-3. When you need state, the system executes your collector
-4. You read `state.json` to see the result
-
-### Example State Collector
-
-When you create a form, also update collector:
-
-```javascript
-// state-collector.js (you maintain this)
-window.freeflow.registerCollector('myForm', () => ({
-  username: document.getElementById('username')?.value,
-  plan: document.querySelector('input[name="plan"]:checked')?.value,
-  agreed: document.getElementById('agree')?.checked,
-}));
-
-// Then read state.json:
-// {"formValues": {"username": "john", "plan": "premium", "agreed": true}}
+```json
+{
+  "formValues": {
+    "username": "john",
+    "email": "john@example.com"
+  },
+  "activeTab": "settings"
+}
 ```
+
+## Protected Files - NEVER EDIT
+
+- `/_shared/freeflow-core.js` - Infrastructure
+- `/_shared/freeflow-collectors.js` - State collection
+- `.claude/` directory - Skills and config
+- Script tags in HTML pointing to `/_shared/`
 
 ## Workspace Location
 
-You're operating in:
-```
-/tmp/freeflow-session-{id}/
-  ├── index.html    ← Edit this
-  ├── style.css     ← Edit this
-  ├── main.js       ← Edit this
-  └── state.json    ← Read this (AI sees user state)
-```
-
-Or in development:
+In development, the default workspace is at:
 ```
 ./workspaces/default/
 ```
 
-## Key Commands
+You edit files in `shadow/`, deploy to `stage/`.
 
-As Claude Code, you naturally respond to user requests like:
-- "Create a login form" → Edit index.html, style.css
-- "Add validation" → Edit main.js
-- "Make it blue" → Edit style.css
-- "What did they type?" → Read state.json (user clicks Sync State first)
+## Quick Commands
 
-## File Structure
+```bash
+# Deploy shadow to stage
+bash .claude/skills/playground-update/deploy.sh
 
-```
-freeflow/
-├── freeflow-app/src/server.ts   # WebSocket + PTY + HTTP server
-├── freeflow-web/                # React + xterm.js
-├── workspaces/default/          # ← You edit files here
-└── CLAUDE.md                   # This file
+# Quick syntax (from anywhere in workspace)
+bash deploy.sh
 ```
 
 ## Development Tips
 
-1. **Start simple**: Plain HTML, add complexity as requested
-2. **Use IDs**: Makes state collection easier (`#username` vs complex selectors)
-3. **Semantic class names**: `.primary-btn` not `.btn-1`
-4. **State collectors**: Update them when you change the UI structure
-5. **Vanilla JS**: Avoid frameworks - easier for AI generation and debugging
-
-## Protocol: State Sync Request
-
-When you need to see current state, you can "ask" by reading state.json after it's been synced. The user clicks "Sync State" or you can ask them to click it.
-
-## Architecture Decision: File-Based IPC
-
-Instead of stdout JSON, you use **file editing**:
-- Output: Edit index.html, style.css
-- Input: Read state.json
-
-This leverages your existing file editing capabilities and is more reliable than structured JSON over stdout.
+1. **Start simple** - Plain HTML, add complexity as requested
+2. **Use IDs** - Makes state collection easier
+3. **Semantic class names** - `.primary-btn` not `.btn-1`
+4. **Vanilla JS** - Easier for AI generation and debugging
+5. **Always use the skill** - Don't deploy manually, follow the workflow

@@ -7,7 +7,7 @@ import { serve } from "bun";
 import type { Server } from "bun";
 import { CONFIG } from "./config";
 import { logger } from "./logger";
-import { spawnClaudePTY, killPty, getPty } from "./pty";
+import { spawnAgentCliPTY, killPty, getPty } from "./pty";
 import type { WebSocketData } from "./types";
 import {
   initWebSocket,
@@ -27,7 +27,7 @@ initState(broadcast);
 initWorkspaces();
 initWebSocket(() => {
   if (!getPty()) {
-    const newPty = spawnClaudePTY();
+    const newPty = spawnAgentCliPTY();
     if (!newPty) {
       logger.error("[Server] Failed to spawn PTY");
     }
