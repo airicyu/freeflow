@@ -110,18 +110,14 @@ bun run install:all
 
 ### Running
 
-**Single command (recommended):**
 ```bash
-./start-dev.sh
+bun start
 ```
 
-Or manually in separate terminals:
-```bash
-# Terminal 1 - Server
-cd freeflow-app && bun run dev
+or
 
-# Terminal 2 - Web UI
-cd freeflow-web && bun run dev
+```bash
+./start-dev.sh
 ```
 
 **Access:**
@@ -129,7 +125,7 @@ cd freeflow-web && bun run dev
 
 ### Stopping
 
-Press `Ctrl+C` in the terminal running `./start-dev.sh` - both server and client will terminate together.
+Press `Ctrl+C` in the terminal running `bun start` or `./start-dev.sh` - both server and client will terminate together.
 
 ## Project Structure
 
@@ -212,4 +208,6 @@ AGENT_CLI_CMD=cursor
 ```
 
 3. Restart the server with `./start-dev.sh`
+
+See [DISCLAIMER.md](DISCLAIMER.md) for security considerations.
 
