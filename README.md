@@ -213,16 +213,3 @@ AGENT_CLI_CMD=cursor
 
 3. Restart the server with `./start-dev.sh`
 
-### Custom CLI Command
-
-For advanced use cases, you can specify custom CLI commands:
-
-```bash
-# Use a specific Claude model
-AGENT_CLI_CMD=claude-opus
-
-# Use a wrapper script
-AGENT_CLI_WRAPPER=/path/to/custom-wrapper
-```
-
-See `.env.example` for all available configuration options.
