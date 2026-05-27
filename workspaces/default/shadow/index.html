@@ -3,118 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Q3 Feature Prioritization Tool</title>
+  <title>Freeflow - Your AI Playground</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
-    <div class="container">
-      <header class="header">
-        <h1>Q3 Feature Prioritization</h1>
-        <p class="subtitle">Score features by Impact × Confidence / Effort</p>
-      </header>
+    <div class="welcome">
+      <div class="welcome-icon">✦</div>
+      <h1>Welcome to Your Playground</h1>
+      <p class="tagline">Chat with me on the left, and I'll build it here on the right.</p>
 
-      <div class="add-feature-card">
-        <h2>Add New Feature</h2>
-        <div class="form-row">
-          <input type="text" id="featureName" placeholder="Enter feature name..." class="feature-input">
-          <button id="addFeature" class="btn-primary">Add Feature</button>
+      <div class="suggestions">
+        <p class="hint">Try asking:</p>
+        <div class="prompts">
+          <button class="prompt">"Map out a workflow"</button>
+          <button class="prompt">"Explore an idea"</button>
+          <button class="prompt">"Sketch a concept"</button>
         </div>
       </div>
 
-      <div class="features-section" id="featuresSection">
-        <div class="section-header">
-          <h2>Features</h2>
-          <div class="sort-controls">
-            <label>Sort by:</label>
-            <select id="sortBy" class="sort-select">
-              <option value="score">ICE Score</option>
-              <option value="impact">Impact</option>
-              <option value="effort">Effort</option>
-              <option value="confidence">Confidence</option>
-              <option value="name">Name</option>
-            </select>
-            <button id="sortOrder" class="sort-btn">↓</button>
-          </div>
-        </div>
-
-        <div id="featuresList" class="features-list">
-          <div class="empty-state">
-            <p>No features added yet. Add your first feature above.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="legend">
-        <h3>Scoring Guide</h3>
-        <div class="legend-grid">
-          <div class="legend-item">
-            <span class="legend-label">Impact</span>
-            <span class="option-tag high">High (3)</span>
-            <span class="option-tag medium">Med (2)</span>
-            <span class="option-tag low">Low (1)</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-label">Effort</span>
-            <span class="option-tag low">Low (1)</span>
-            <span class="option-tag medium">Med (2)</span>
-            <span class="option-tag high">High (3)</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-label">Confidence</span>
-            <span class="option-tag high">High (3)</span>
-            <span class="option-tag medium">Med (2)</span>
-            <span class="option-tag low">Low (1)</span>
-          </div>
-        </div>
-        <p class="formula">ICE Score = Impact × Confidence / Effort</p>
+      <div class="chat-hint">
+        <span class="arrow">←</span>
+        <span>Start in the chat panel</span>
       </div>
     </div>
   </div>
 
-  <!-- Templates -->
-  <template id="featureTemplate">
-    <div class="feature-card" data-id="">
-      <div class="feature-header">
-        <h3 class="feature-name"></h3>
-        <button class="delete-btn" title="Remove feature">×</button>
-      </div>
-      <div class="criteria-row">
-        <div class="criterion">
-          <label>Impact</label>
-          <select class="criterion-select impact-select">
-            <option value="3">High</option>
-            <option value="2" selected>Medium</option>
-            <option value="1">Low</option>
-          </select>
-        </div>
-        <div class="criterion">
-          <label>Effort</label>
-          <select class="criterion-select effort-select">
-            <option value="1">Low</option>
-            <option value="2" selected>Medium</option>
-            <option value="3">High</option>
-          </select>
-        </div>
-        <div class="criterion">
-          <label>Confidence</label>
-          <select class="criterion-select confidence-select">
-            <option value="3">High</option>
-            <option value="2" selected>Medium</option>
-            <option value="1">Low</option>
-          </select>
-        </div>
-        <div class="score-display">
-          <span class="score-value"></span>
-          <span class="score-label">ICE</span>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <!-- Freeflow Infrastructure -->
+  <!-- Freeflow Infrastructure - PROTECTED: Do NOT remove -->
   <script src="/_shared/freeflow-core.js"></script>
   <script src="/_shared/freeflow-collectors.js"></script>
+  <!-- App Logic - AI Editable: Clear/modify content, keep script tag -->
   <script src="app.js"></script>
 </body>
 </html>
