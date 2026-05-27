@@ -100,7 +100,7 @@ AI-powered interactive playground where you chat with an AI Agent in a terminal 
 ### Prerequisites
 
 1. [Bun](https://bun.sh) installed
-2. AI CLI tool installed (e.g., Claude Code: `npm install -g @anthropic-ai/claude-code`)
+2. AI CLI tool installed (see [AI CLI Support](#ai-cli-support) below)
 
 ### Installation
 
@@ -178,9 +178,51 @@ freeflow/
 
 ## Key Features
 
-- **Full AI CLI TUI** in browser terminal (currently Claude Code)
+- **Full AI CLI TUI** in browser terminal (Claude Code, Cursor, etc.)
 - **Live Commands** - HTTP API for instant DOM manipulation
 - **Smooth Deploy** - Phased workflow (cooking → pre-deploy → reload)
 - **State Sync** - Bidirectional: AI creates UI, captures user interactions
 - **Single Start Command** - `./start-dev.sh` starts both server and client
 - **Clean Termination** - Ctrl+C stops everything, no stale processes
+
+## AI CLI Support
+
+Freeflow supports multiple AI CLI tools. By default, **Claude Code** is configured.
+
+### Supported CLIs
+
+| CLI | Setup Command | Configuration |
+|-----|---------------|---------------|
+| **Claude Code** (default) | `npm install -g @anthropic-ai/claude-code` | No changes needed |
+| **Cursor** | Install via [Cursor](https://cursor.sh) | Update `.env` file |
+
+### Using Cursor
+
+To use Cursor instead of Claude Code:
+
+1. Open `.env` in the project root
+2. Change the `AGENT_CLI_CMD` variable:
+
+```bash
+# From
+AGENT_CLI_CMD=claude
+
+# To
+AGENT_CLI_CMD=cursor
+```
+
+3. Restart the server with `./start-dev.sh`
+
+### Custom CLI Command
+
+For advanced use cases, you can specify custom CLI commands:
+
+```bash
+# Use a specific Claude model
+AGENT_CLI_CMD=claude-opus
+
+# Use a wrapper script
+AGENT_CLI_WRAPPER=/path/to/custom-wrapper
+```
+
+See `.env.example` for all available configuration options.

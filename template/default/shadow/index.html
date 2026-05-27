@@ -3,36 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Freeflow - Your AI Playground</title>
+  <title>How Freeflow Works</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
-    <div class="welcome">
-      <div class="welcome-icon">✦</div>
-      <h1>Welcome to Your Playground</h1>
-      <p class="tagline">Chat with me on the left, and I'll build it here on the right.</p>
+    <div class="story-container">
+      <!-- Title -->
+      <header class="story-header">
+        <h1>How We Work Together</h1>
+        <p class="subtitle">A simple story of You + AI = Magic ✨</p>
+      </header>
 
-      <div class="suggestions">
-        <p class="hint">Try asking:</p>
-        <div class="prompts">
-          <button class="prompt">"Map out a workflow"</button>
-          <button class="prompt">"Explore an idea"</button>
-          <button class="prompt">"Sketch a concept"</button>
+      <!-- Scene 1: You -->
+      <div class="scene" data-scene="1">
+        <div class="scene-number">1</div>
+        <div class="scene-content">
+          <div class="character you">
+            <div class="avatar">🙂</div>
+            <div class="bubble">
+              <p>"I want a to-do list<br>with pink checkboxes..."</p>
+            </div>
+          </div>
+          <div class="arrow">↓</div>
+          <div class="location chat-room">
+            <div class="room-icon">💬</div>
+            <div class="room-label">Chat Room</div>
+            <div class="room-desc">You type here — just like texting a friend</div>
+          </div>
         </div>
       </div>
 
-      <div class="chat-hint">
-        <span class="arrow">←</span>
-        <span>Start in the chat panel</span>
+      <!-- Connector -->
+      <div class="connector">
+        <div class="connector-line"></div>
+        <div class="connector-label">In seconds...</div>
+      </div>
+
+      <!-- Scene 2: Me Building -->
+      <div class="scene" data-scene="2">
+        <div class="scene-number">2</div>
+        <div class="scene-content">
+          <div class="character ai">
+            <div class="avatar">🤖</div>
+            <div class="bubble working">
+              <div class="working-dots">
+                <span></span><span></span><span></span>
+              </div>
+              <p>Building your pink<br>checkbox list...</p>
+            </div>
+          </div>
+          <div class="arrow">↓</div>
+          <div class="location workshop">
+            <div class="room-icon">🔨</div>
+            <div class="room-label">My Workshop (Shadow)</div>
+            <div class="room-desc">I quietly build behind the scenes</div>
+            <div class="mini-preview">
+              <div class="checkbox pink"></div>
+              <div class="checkbox pink"></div>
+              <div class="checkbox pink checked"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connector -->
+      <div class="connector">
+        <div class="connector-line"></div>
+        <div class="connector-label">Poof! ✨</div>
+      </div>
+
+      <!-- Scene 3: You See It -->
+      <div class="scene" data-scene="3">
+        <div class="scene-number">3</div>
+        <div class="scene-content">
+          <div class="character you happy">
+            <div class="avatar">😍</div>
+            <div class="bubble">
+              <p>"Wow! It's perfect!"</p>
+            </div>
+          </div>
+          <div class="arrow">↓</div>
+          <div class="location stage">
+            <div class="room-icon">🎨</div>
+            <div class="room-label">Your Canvas (Stage)</div>
+            <div class="room-desc">Appears here instantly — no refresh needed!</div>
+            <div class="live-preview">
+              <div class="task-item">
+                <div class="task-check checked pink">✓</div>
+                <span>Buy groceries</span>
+              </div>
+              <div class="task-item">
+                <div class="task-check pink"></div>
+                <span>Call mom</span>
+              </div>
+              <div class="task-item">
+                <div class="task-check pink"></div>
+                <span>Finish report</span>
+              </div>
+            </div>
+            <div class="live-badge">LIVE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- The Magic Detail -->
+      <div class="magic-section">
+        <h2>The Secret Sauce 🔮</h2>
+        <div class="magic-cards">
+          <div class="magic-card">
+            <div class="card-icon">🔄</div>
+            <h3>Smooth Updates</h3>
+            <p>When you say "make it blue" — I don't just refresh the page.<br>
+            I carefully swap the new version in, keeping your scroll position,<br>
+            your typing, everything exactly where you left it.</p>
+          </div>
+          
+          <div class="magic-card">
+            <div class="card-icon">💾</div>
+            <h3>Your Work is Safe</h3>
+            <p>Everything you type or check gets saved automatically.<br>
+            Even if I update the design, your data stays.<br>
+            It's like magic copy-paste behind the scenes!</p>
+          </div>
+          
+          <div class="magic-card">
+            <div class="card-icon">⚡</div>
+            <h3>Instant Feedback</h3>
+            <p>Some tiny changes (like checking a box) happen immediately<br>
+            while you keep working. No waiting, no loading screens.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="summary-section">
+        <div class="summary-visual">
+          <div class="flow-simple">
+            <div class="flow-step-simple">
+              <div class="step-emoji">💬</div>
+              <div class="step-text">You Ask</div>
+            </div>
+            <div class="flow-arrow-simple">→</div>
+            <div class="flow-step-simple">
+              <div class="step-emoji">🔨</div>
+              <div class="step-text">I Build</div>
+            </div>
+            <div class="flow-arrow-simple">→</div>
+            <div class="flow-step-simple">
+              <div class="step-emoji">🎨</div>
+              <div class="step-text">You See</div>
+            </div>
+          </div>
+        </div>
+        <p class="summary-text">
+          That's it! Two panels, one conversation.<br>
+          You imagine it, I build it, you see it — together 🌊
+        </p>
       </div>
     </div>
   </div>
 
-  <!-- Freeflow Infrastructure - PROTECTED: Do NOT remove -->
   <script src="/_shared/freeflow-core.js"></script>
   <script src="/_shared/freeflow-collectors.js"></script>
-  <!-- App Logic - AI Editable: Clear/modify content, keep script tag -->
   <script src="app.js"></script>
 </body>
 </html>

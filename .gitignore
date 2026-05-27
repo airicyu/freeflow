@@ -114,4 +114,5 @@ dist
 
 /.claude/settings.local.json
 /.vscode/launch.json
-/brainstorm
+
+/workspaces/**/state.json
