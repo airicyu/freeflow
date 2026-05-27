@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "./start-dev.sh",
-    "start:server": "cd freeflow-app && bun run start",
+    "start:server": "cd freeflow-app && bun --env-file=../.env run start",
     "dev:client": "cd freeflow-web && bun run dev",
     "build": "cd freeflow-web && bun run build",
     "start:client": "cd freeflow-web && bun run preview",

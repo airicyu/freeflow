@@ -4,7 +4,7 @@
   "description": "Bun server for Freeflow - WebSocket hub, PTY manager, and file coordinator",
   "type": "module",
   "scripts": {
-    "start": "bun run src/server.ts",
+    "start": "bun --env-file=../.env run src/server.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {},

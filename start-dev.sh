@@ -35,7 +35,7 @@ trap cleanup SIGINT SIGTERM EXIT
 
 # Start the Bun server (port 3000)
 echo -e "${SERVER_COLOR}[Server]${NC} Starting on port 3000..."
-cd "$SCRIPT_DIR/freeflow-app" && bun start &
+cd "$SCRIPT_DIR/freeflow-app" && bun --env-file=../.env start &
 SERVER_PID=$!
 
 # Wait a moment for server to start

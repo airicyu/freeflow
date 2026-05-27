@@ -105,7 +105,6 @@ AI-powered interactive playground where you chat with an AI Agent in a terminal 
 ### Installation
 
 ```bash
-cd freeflow
 bun run install:all
 ```
 
@@ -185,19 +184,3 @@ freeflow/
 - **State Sync** - Bidirectional: AI creates UI, captures user interactions
 - **Single Start Command** - `./start-dev.sh` starts both server and client
 - **Clean Termination** - Ctrl+C stops everything, no stale processes
-
-## Common Commands
-
-```bash
-# Start everything
-./start-dev.sh
-
-# Read current playground state
-cat workspaces/default/stage/state.json
-
-# Deploy shadow to stage (from within workspace)
-bash .claude/skills/playground-update/deploy.sh
-
-# Or shorthand (works from shadow/ or stage/)
-bash deploy.sh
-```
