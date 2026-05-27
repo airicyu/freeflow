@@ -1,6 +1,6 @@
-# Freeflow AI Brain - Workspace Guide
+# Freeflow AI Agent - Workspace Guide
 
-**AI Brain** = Claude Code running in the terminal PTY.
+**AI Agent** = Claude Code running in the terminal PTY.
 
 ## Understanding the Conversation Context
 
@@ -18,21 +18,67 @@ Only implement in the playground when the user explicitly asks to "build", "crea
 
 **Critical:** Distinguish between "saving content" (playground) vs "remembering preferences" (memory).
 
+### 🚩 Red Flag Words — STOP and Check
+
+These words are **ambiguous**. When you see them, pause and use the decision table below:
+
+| Word | Can Mean Playground | Can Mean Memory |
+|------|---------------------|-----------------|
+| **Save** | "Save this to the UI" | "Save my preference" |
+| **Add** | "Add a button to the page" | "Add to my profile" |
+| **Show** | "Show a diagram" | "Show me what you know" |
+| **Clear** | "Clear the UI" | "Clear my saved settings" |
+| **Remove** | "Remove that card" | "Remove from memory" |
+| **Keep** | "Keep this layout" | "Keep this in mind" |
+| **Update** | "Update the UI" | "Update my settings" |
+
+**Rule:** If user says any red flag word → consult the table below BEFORE acting.
+
+### Pattern Matching Rules
+
+| Pattern | Target | Example |
+|---------|--------|---------|
+| **"Save this [THING]"** | 🎨 Playground | "Save this rule" → Show in UI |
+| **"Save my [ATTRIBUTE]"** | 🧠 Memory | "Save my username" → Remember me |
+| **"Remember I..."** | 🧠 Memory | "Remember I'm a PM" → User profile |
+| **"Show me [CONCEPT]"** | 🎨 Playground | "Show me a workflow" → Visualize it |
+| **"Add [UI ELEMENT]"** | 🎨 Playground | "Add a card for X" → Render in UI |
+
+### Decision Table
+
 | User says... | Interpret as... | Action |
 |--------------|-----------------|--------|
-| "Save this example" | Add to playground UI | Use `/skill playground-update` |
-| "Add a card for X" | Visual content | Use `/skill playground-update` |
-| "Document this path" | Show in playground | Use `/skill playground-update` |
-| "Create a list of..." | Render in UI | Use `/skill playground-update` |
-| "Remember I prefer..." | Personal preference | Use memory system |
-| "Don't use emojis" | Feedback/correction | Use memory system |
-| "I'm a backend engineer" | User profile | Use memory system |
+| "Save this example/rule/decision" | 🎨 Add to playground UI | Use `/skill playground-update` |
+| "Save this P1 criteria" | 🎨 Show criteria in playground | Use `/skill playground-update` |
+| "Add a card for X" | 🎨 Visual content | Use `/skill playground-update` |
+| "Document this path" | 🎨 Show in playground | Use `/skill playground-update` |
+| "Create a list of..." | 🎨 Render in UI | Use `/skill playground-update` |
+| **"Save my username as..."** | 🧠 Personal data | Use memory system |
+| **"Remember I prefer..."** | 🧠 Personal preference | Use memory system |
+| **"Don't use emojis"** | 🧠 Feedback/correction | Use memory system |
+| **"I'm a backend engineer"** | 🧠 User profile | Use memory system |
+| **"Remember my role is..."** | 🧠 User profile | Use memory system |
 
-**Rule:** If the user wants to "save", "add", "create", or "document" something in the **playground content**, invoke the playground-update skill. If they want you to "remember" something about **them personally**, use the memory system.
+**Key distinction:**
+- **Playground** = Content, rules, decisions, examples, diagrams, lists
+- **Memory** = Personal info, preferences, profile, feedback about how to work
 
-**Examples:**
-- "Save this routing example" → Interpret as "Add example to playground UI" → Use skill
-- "Save my username as john" → Interpret as "Remember my username" → Use memory
+### Common Mistakes
+
+| Wrong Interpretation | Correct Interpretation |
+|---------------------|------------------------|
+| "Save this decision" → Remember it for later | → Show the decision in the playground UI |
+| "Save my P1 criteria" → Remember my preference | → Display P1 criteria in the playground |
+
+### When Still Uncertain
+
+**DO NOT GUESS.** Use the skill:
+
+```
+/skill playground-intent
+```
+
+This disambiguates intent before you act.
 
 ## When Intent is Unclear: Use playground-intent Skill
 
